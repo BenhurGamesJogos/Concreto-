@@ -8,7 +8,7 @@ import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
 
 function App() {
   const [inputs, setInputs] = useState<DosageInputs>({
-    volumeTotal: 10,
+    volumeTotal: 1, // Fixed to 1m3
     fck: 25,
     sdControl: StandardDeviationControl.RAZOAVEL,
     slump: 60,
@@ -52,14 +52,16 @@ function App() {
       <Header />
       
       <main className="container mx-auto px-4 py-8 flex-grow">
-        <div className="max-w-5xl mx-auto grid gap-8">
+        {/* Changed max-w-5xl to max-w-[1600px] to give more room for split view */}
+        <div className="max-w-[1600px] mx-auto grid gap-8">
           
           <div className="text-center mb-4">
-            <h2 className="text-3xl font-bold text-slate-800">Calculadora de Dosagem</h2>
+            <h2 className="text-3xl font-bold text-[#1C448E]">Calculadora de Dosagem</h2>
             <p className="text-slate-500 mt-2">Método de dosagem racional com correção de umidade e volume</p>
           </div>
 
           <div className="grid lg:grid-cols-12 gap-8">
+            {/* Adjusted layout ratio slightly to give input form a bit more relative width if needed, keeping 5/7 split but in a wider container */}
             <div className={`lg:col-span-${results ? '5' : '12'} transition-all duration-500`}>
               <InputForm 
                 inputs={inputs} 
@@ -77,9 +79,9 @@ function App() {
         </div>
       </main>
 
-      <footer className="bg-slate-200 text-slate-500 py-6 mt-12 text-center text-sm">
+      <footer className="bg-[#1C448E] text-white py-6 mt-12 text-center text-sm">
         <p>&copy; {new Date().getFullYear()} Nada Concreto - UFRN. Developed by Ben-Hur.</p>
-        <p className="text-xs mt-1">Este aplicativo é uma ferramenta de apoio educacional.</p>
+        <p className="text-xs mt-1 opacity-70">Este aplicativo é uma ferramenta de apoio educacional.</p>
       </footer>
     </div>
   );
