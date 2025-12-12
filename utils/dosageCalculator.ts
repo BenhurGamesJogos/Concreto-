@@ -1,4 +1,4 @@
-import { DosageInputs, DosageResults } from '../types';
+import { DosageInputs, DosageResults, PadiolaSpecs } from '../types';
 import { CEMENT_CONSTANTS, DURABILITY_TABLE, WATER_TABLE, CEMENT_SACK_VOLUME_LITERS, CEMENT_SACK_WEIGHT_KG, CAN_VOLUME_LITERS } from '../constants';
 
 // Helper to get water content from table
@@ -16,6 +16,46 @@ const getWaterContent = (slump: number, dmax: number): number => {
 
   // @ts-ignore - access safe due to structure
   return row.dmax[closestDmax] || 200; // Fallback
+};
+
+// Helper: Round to nearest 0.5 (for Cans)
+const roundToHalf = (num: number): number => {
+  return Math.round(num * 2) / 2;
+};
+
+// Helper: Round UP to nearest 0.5 (for Padiola Dimensions construction)
+// Ex: 18.3 -> 18.5; 27.7 -> 28.0
+const roundUpToHalf = (num: number): number => {
+  return Math.ceil(num * 2) / 2;
+};
+
+// Helper: Calculate Padiola Dimensions
+// Base Assumption: 35cm x 45cm (Standard Cement Sack Mouth)
+// Limit: Height/Length <= 30cm. If > 30, split into 2.
+const calculatePadiola = (volumeLiters: number): PadiolaSpecs => {
+  const width = 35; // cm
+  const length = 45; // cm
+  
+  // Volume (L) = (Width(cm) * Length(cm) * Height(cm)) / 1000
+  // Height = (Volume * 1000) / (Width * Length)
+  let height = (volumeLiters * 1000) / (width * length);
+  let count = 1;
+
+  // Restriction: Max height/length of 30cm for handling
+  if (height > 30) {
+    count = 2;
+    height = height / 2;
+  }
+
+  // Round up height to facilitate box construction (trena friendly)
+  height = roundUpToHalf(height);
+
+  return {
+    count,
+    width,
+    length,
+    height
+  };
 };
 
 export const calculateDosage = (inputs: DosageInputs): DosageResults => {
@@ -97,17 +137,7 @@ export const calculateDosage = (inputs: DosageInputs): DosageResults => {
   // 9. & 10. & 11. Results
   
   // Volume unitário (Traço)
-  // v_c = 1
-  // v_sand = (sandMassDryCorrected / cementContent) * (dc / d_sand) -- Wait, the PDF Method:
-  // PDF 11: vc = c/dc, v1 = Mh1'/d1 ?? No, usually Trace is dry based for specification, but pad tools use wet.
-  // PDF Step 10: Ratio by Mass (Dry): 1 : m1 : m2 : x
-  // PDF Step 11: Ratio by Volume: 1 : n1 : n2 : na
-  // n1 = v1/vc = (Mh1_or_Dry? / d1) / (c / dc)
-  // Usually Volume Trace is based on DRY or WET depending on site. 
-  // Step 11 Formula: v1 = Mh1' / d1. This implies using the WET sand mass for the volume calculation (common in Brazil site mix).
-  // Let's follow PDF: v1 = Mh1'/d1.
-  
-  const volCement = cementContent / inputs.cementUnitMass; // Liters (if Mass is kg and UnitMass kg/L)
+  const volCement = cementContent / inputs.cementUnitMass; // Liters
   const volSand = sandMassWet / inputs.sandUnitMass;
   const volGravel = gravelMassDryCorrected / inputs.gravelUnitMass;
   const volWater = waterCorrected; // Density 1
@@ -121,7 +151,6 @@ export const calculateDosage = (inputs: DosageInputs): DosageResults => {
   };
 
   // Weight Trace (Unitary) 1 : m1 : m2 : x
-  // Uses corrected dry masses relative to cement mass
   const weightTrace = {
     cement: 1,
     sand: sandMassDryCorrected / cementContent,
@@ -130,16 +159,20 @@ export const calculateDosage = (inputs: DosageInputs): DosageResults => {
   };
 
   // Sack Trace (50kg)
-  // 1 sack = 35 liters (approx) or use mass/unit_mass
   const cementSacksTotal = (inputs.volumeTotal * cementContent) / CEMENT_SACK_WEIGHT_KG;
   
   // Volume per sack
   const sandVolPerSack = traceRatio.sand * CEMENT_SACK_VOLUME_LITERS; // Using 35L reference for volume ratio
   const gravelVolPerSack = traceRatio.gravel * CEMENT_SACK_VOLUME_LITERS;
-  
-  // Water per sack (mass balance approach is better for precision, but volume ratio * 35L is the site method)
-  // Actually, Water per sack = (Water Total / Cement Total) * 50kg
   const waterPerSack = (waterCorrected / cementContent) * CEMENT_SACK_WEIGHT_KG;
+
+  // Cans Calculation
+  const sandCans = sandVolPerSack / CAN_VOLUME_LITERS;
+  const gravelCans = gravelVolPerSack / CAN_VOLUME_LITERS;
+
+  // Padiola Calculation
+  const sandPadiola = calculatePadiola(sandVolPerSack);
+  const gravelPadiola = calculatePadiola(gravelVolPerSack);
 
   return {
     fc28,
@@ -172,8 +205,14 @@ export const calculateDosage = (inputs: DosageInputs): DosageResults => {
       sandVolumePerSack: sandVolPerSack,
       gravelVolumePerSack: gravelVolPerSack,
       waterVolumePerSack: waterPerSack,
-      sandCansPerSack: sandVolPerSack / CAN_VOLUME_LITERS,
-      gravelCansPerSack: gravelVolPerSack / CAN_VOLUME_LITERS
+      sandCansPerSack: sandCans,
+      sandCansRounded: roundToHalf(sandCans),
+      gravelCansPerSack: gravelCans,
+      gravelCansRounded: roundToHalf(gravelCans),
+    },
+    padiolas: {
+      sand: sandPadiola,
+      gravel: gravelPadiola
     }
   };
 };

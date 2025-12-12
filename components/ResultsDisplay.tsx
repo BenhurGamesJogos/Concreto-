@@ -1,6 +1,6 @@
 import React from 'react';
-import { DosageResults } from '../types';
-import { ClipboardList, Box, Droplets, Layers, Scale } from 'lucide-react';
+import { DosageResults, PadiolaSpecs } from '../types';
+import { ClipboardList, Box, Droplets, Layers, Scale, HardHat, Ruler } from 'lucide-react';
 
 interface Props {
   results: DosageResults;
@@ -76,7 +76,6 @@ const ResultsDisplay: React.FC<Props> = ({ results }) => {
             <h3 className="font-bold text-[#1C448E] mb-4 flex items-center gap-2">
               <Scale size={18} className="text-[#0084CA]"/> Traço em Peso
             </h3>
-            {/* Added whitespace-nowrap and overflow-auto to prevent breaking lines */}
             <div className="bg-slate-100 p-4 rounded-lg text-center font-mono text-lg md:text-xl text-slate-700 border border-slate-200 overflow-x-auto">
                <div className="whitespace-nowrap">
                  1 : {formatNum(results.weightTrace.sand)} : {formatNum(results.weightTrace.gravel)} : {formatNum(results.weightTrace.water)}
@@ -92,7 +91,6 @@ const ResultsDisplay: React.FC<Props> = ({ results }) => {
             <h3 className="font-bold text-[#1C448E] mb-4 flex items-center gap-2">
               <Layers size={18} className="text-[#0084CA]"/> Traço em Volume
             </h3>
-            {/* Added whitespace-nowrap and overflow-auto to prevent breaking lines */}
             <div className="bg-slate-100 p-4 rounded-lg text-center font-mono text-lg md:text-xl text-slate-700 border border-slate-200 overflow-x-auto">
                <div className="whitespace-nowrap">
                  1 : {formatNum(results.traceRatio.sand)} : {formatNum(results.traceRatio.gravel)} : {formatNum(results.traceRatio.water)}
@@ -104,36 +102,65 @@ const ResultsDisplay: React.FC<Props> = ({ results }) => {
           </div>
         </div>
 
-        {/* Padiola / Saco Column */}
+        {/* Instructions for Mixer Operator (Betoneiro) - Taking full column space now */}
         <div className="lg:col-span-7">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-full">
-             <h3 className="font-bold text-[#1C448E] mb-4 flex items-center gap-2">
-              <Box size={18} className="text-[#0084CA]"/> Traço por Saco (50kg)
-            </h3>
-            
-            <div className="space-y-6 pt-2">
-               {/* Total Sacos Removed as requested */}
-               
-               <div className="space-y-4">
-                 <p className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Para cada saco de 50kg:</p>
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100 flex flex-col justify-center">
-                      <div className="text-xs text-yellow-800 font-medium mb-1">Areia Úmida</div>
-                      <div className="font-bold text-xl text-yellow-900">{formatNum(results.sackTrace.sandCansPerSack, 1)} Latas</div>
-                      <div className="text-[10px] text-yellow-700/70 mt-1">(Lata 18L)</div>
+          <div className="bg-[#1C448E] rounded-xl shadow-lg border border-blue-900 p-6 text-white h-full flex flex-col">
+             <div>
+                <h3 className="font-bold text-white mb-1 flex items-center gap-2 text-xl">
+                  <HardHat size={24} className="text-[#0084CA]"/> Instruções para o Betoneiro
+                </h3>
+                <p className="text-blue-200 text-sm mb-6 ml-8">Traço para <strong>1 Saco de Cimento (50kg)</strong></p>
+
+                <div className="space-y-6">
+                   {/* Padiolas Row */}
+                   <div className="bg-blue-900/40 p-5 rounded-xl border border-blue-800">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Ruler className="text-yellow-400" size={20} />
+                        <h4 className="font-bold text-yellow-400 text-sm uppercase">1. Medir Agregados (Padiolas)</h4>
+                      </div>
+                      
+                      <p className="text-blue-100 text-sm mb-4">
+                        Utilizar padiolas com base padrão de <strong>35cm x 45cm</strong>.
+                      </p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <PadiolaCard 
+                           title="Areia" 
+                           specs={results.padiolas.sand} 
+                           colorClass="text-yellow-200"
+                        />
+                        <PadiolaCard 
+                           title="Brita" 
+                           specs={results.padiolas.gravel} 
+                           colorClass="text-slate-200"
+                        />
+                      </div>
+                      <div className="mt-3 text-[10px] text-blue-300 italic">
+                       * Alturas arredondadas para cima (0.5cm). 
+                       { (results.padiolas.sand.count > 1 || results.padiolas.gravel.count > 1) && 
+                         " Volumes divididos em viagens para limitar altura a 30cm."
+                       }
+                      </div>
                    </div>
-                   <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col justify-center">
-                      <div className="text-xs text-slate-800 font-medium mb-1">Brita</div>
-                      <div className="font-bold text-xl text-slate-900">{formatNum(results.sackTrace.gravelCansPerSack, 1)} Latas</div>
-                      <div className="text-[10px] text-slate-500 mt-1">(Lata 18L)</div>
+
+                   {/* Water Row - Added here since we removed the previous card */}
+                   <div className="bg-blue-900/40 p-5 rounded-xl border border-blue-800 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                         <div className="bg-blue-500/20 p-3 rounded-lg">
+                           <Droplets className="text-blue-300" size={24} />
+                         </div>
+                         <div>
+                            <h4 className="font-bold text-white text-sm uppercase">2. Adicionar Água</h4>
+                            <p className="text-blue-200 text-xs">Volume final já descontando umidade da areia</p>
+                         </div>
+                      </div>
+                      <div className="text-right bg-blue-950/30 px-6 py-2 rounded-lg border border-blue-500/30">
+                         <div className="text-3xl font-bold text-white">{formatNum(results.sackTrace.waterVolumePerSack, 1)}</div>
+                         <div className="text-sm text-blue-300 font-medium">Litros</div>
+                      </div>
                    </div>
-                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex flex-col justify-center">
-                      <div className="text-xs text-blue-800 font-medium mb-1">Água</div>
-                      <div className="font-bold text-xl text-blue-900">{formatNum(results.sackTrace.waterVolumePerSack, 1)} L</div>
-                   </div>
-                 </div>
-               </div>
-            </div>
+                </div>
+             </div>
           </div>
         </div>
       
@@ -147,6 +174,20 @@ const ResultsDisplay: React.FC<Props> = ({ results }) => {
     </div>
   );
 };
+
+const PadiolaCard = ({ title, specs, colorClass }: { title: string, specs: PadiolaSpecs, colorClass: string }) => (
+  <div className="border border-white/10 bg-white/5 rounded p-3 hover:bg-white/10 transition-colors">
+    <div className={`font-semibold ${colorClass} text-sm mb-1`}>{title}</div>
+    <div className="flex items-baseline gap-2">
+       <span className="text-2xl font-bold">{specs.count}</span>
+       <span className="text-sm opacity-80">{specs.count === 1 ? 'Viagem' : 'Viagens'} de:</span>
+    </div>
+    <div className="font-mono text-xl mt-1 tracking-wide">
+      {specs.width} x {specs.length} x <span className="font-bold text-white bg-white/20 px-1.5 py-0.5 rounded">{specs.height.toFixed(1)}</span> cm
+    </div>
+    <div className="text-[10px] opacity-60 mt-1">Largura x Comprimento x Altura</div>
+  </div>
+);
 
 const ResultCard = ({ label, value, icon }: { label: string, value: string, icon: React.ReactNode }) => (
   <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-24">

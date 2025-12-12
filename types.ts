@@ -56,6 +56,13 @@ export interface DosageInputs {
   structureType: StructureType;
 }
 
+export interface PadiolaSpecs {
+  count: number; // 1 or 2 trips
+  width: number; // cm
+  length: number; // cm
+  height: number; // cm
+}
+
 export interface DosageResults {
   fc28: number;
   waterConsumption: number; // Liters
@@ -113,7 +120,15 @@ export interface DosageResults {
     sandVolumePerSack: number; // Liters
     gravelVolumePerSack: number; // Liters
     waterVolumePerSack: number; // Liters
-    sandCansPerSack: number; // Latas 18L
-    gravelCansPerSack: number; // Latas 18L
+    sandCansPerSack: number; // Latas 18L (Exact)
+    sandCansRounded: number; // Latas 18L (Rounded to 0.5)
+    gravelCansPerSack: number; // Latas 18L (Exact)
+    gravelCansRounded: number; // Latas 18L (Rounded to 0.5)
+  };
+
+  // Padiolas
+  padiolas: {
+    sand: PadiolaSpecs;
+    gravel: PadiolaSpecs;
   };
 }
