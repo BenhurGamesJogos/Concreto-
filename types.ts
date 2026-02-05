@@ -11,7 +11,7 @@ export enum ExposureCondition {
 
 export enum StructureType {
   DELGADA = 'Delgada',
-  COMUM = 'Comum' // Used for both structure type and exposure condition context
+  COMUM = 'Comum'
 }
 
 export enum StandardDeviationControl {
@@ -20,113 +20,94 @@ export enum StandardDeviationControl {
   REGULAR = 7.0
 }
 
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  NORMAL = 'NORMAL'
+}
+
+export interface User {
+  id: string;
+  username: string;
+  password?: string;
+  name: string;
+  role: UserRole;
+}
+
 export interface DosageInputs {
-  // Project Data
-  volumeTotal: number; // m3
-  fck: number; // MPa
+  volumeTotal: number;
+  fck: number;
   sdControl: StandardDeviationControl;
-  slump: number; // mm
-  
-  // Cement Data
+  slump: number;
   cementClass: CementClass;
-  cementSpecificMass: number; // kg/l (approx 3.1)
-  cementUnitMass: number; // kg/l for volume conversion
-  
-  // Aggregate Data
-  dmc: number; // Maximum diameter (mm)
-  
-  // Sand (Miúdo)
-  sandSpecificMass: number; // kg/l
-  sandUnitMass: number; // kg/l
-  sandMoisture: number; // %
-  sandSwell?: number; // inchamento (optional, simpler version ignores or assumes 1.0 for mass, needed for detailed volume pad)
-  
-  // Gravel (Graúdo)
-  gravelSpecificMass: number; // kg/l
-  gravelUnitMass: number; // kg/l
-  
-  // Algorithm Parameters (The 3 criteria)
-  // Default values: as=50%, am=40%, ar=60%
-  alphaS: number; // Teor de argamassa seca (%)
-  alphaM: number; // Relação agregado miúdo/total (%)
-  alphaR: number; // Teor real de argamassa (%)
-  
-  // Durability
+  cementSpecificMass: number;
+  cementUnitMass: number;
+  dmc: number;
+  sandSpecificMass: number;
+  sandUnitMass: number;
+  sandMoisture: number;
+  sandSwell?: number;
+  gravelSpecificMass: number;
+  gravelUnitMass: number;
+  alphaS: number;
+  alphaM: number;
+  alphaR: number;
   exposure: ExposureCondition;
   structureType: StructureType;
 }
 
 export interface PadiolaSpecs {
-  count: number; // 1 or 2 trips
-  width: number; // cm
-  length: number; // cm
-  height: number; // cm
+  count: number;
+  width: number;
+  length: number;
+  height: number;
 }
 
 export interface DosageResults {
   fc28: number;
-  waterConsumption: number; // Liters
-  waterCementRatio: number; // x
-  cementContent: number; // kg
-  
-  // Raw Aggregates (Dry)
-  totalAggregateMass: number; // M
-  sandMassDry: number; // M1
-  gravelMassDry: number; // M2
-  
-  // Corrected Aggregates (Specific Mass Correction)
-  sandMassDryCorrected: number; // M1'
-  gravelMassDryCorrected: number; // M2'
-  
-  // Moisture Corrected (Wet)
-  sandMassWet: number; // Mh1'
-  waterCorrected: number; // a'
-  
-  // Results per m3
+  waterConsumption: number;
+  waterCementRatio: number;
+  cementContent: number;
+  totalAggregateMass: number;
+  sandMassDry: number;
+  gravelMassDry: number;
+  sandMassDryCorrected: number;
+  gravelMassDryCorrected: number;
+  sandMassWet: number;
+  waterCorrected: number;
   perM3: {
     cement: number;
     sandWet: number;
     gravel: number;
     water: number;
   };
-  
-  // Results for Total Volume
   total: {
     cement: number;
     sandWet: number;
     gravel: number;
     water: number;
   };
-  
-  // Weight Trace (Unitary) 1 : m1 : m2 : x (a/c)
   weightTrace: {
     cement: number;
     sand: number;
     gravel: number;
     water: number;
   };
-
-  // Volume Trace (Unitary) 1 : n1 : n2 : na
   traceRatio: {
     cement: number;
     sand: number;
     gravel: number;
     water: number;
   };
-  
-  // Sack Trace (per 50kg sack)
   sackTrace: {
-    cementSacks: number; // For total volume
-    sandVolumePerSack: number; // Liters
-    gravelVolumePerSack: number; // Liters
-    waterVolumePerSack: number; // Liters
-    sandCansPerSack: number; // Latas 18L (Exact)
-    sandCansRounded: number; // Latas 18L (Rounded to 0.5)
-    gravelCansPerSack: number; // Latas 18L (Exact)
-    gravelCansRounded: number; // Latas 18L (Rounded to 0.5)
+    cementSacks: number;
+    sandVolumePerSack: number;
+    gravelVolumePerSack: number;
+    waterVolumePerSack: number;
+    sandCansPerSack: number;
+    sandCansRounded: number;
+    gravelCansPerSack: number;
+    gravelCansRounded: number;
   };
-
-  // Padiolas
   padiolas: {
     sand: PadiolaSpecs;
     gravel: PadiolaSpecs;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { DosageInputs, CementClass, ExposureCondition, StructureType, StandardDeviationControl } from '../types';
-import { Info } from 'lucide-react';
+import { Info, Hammer } from 'lucide-react';
 
 interface Props {
   inputs: DosageInputs;
@@ -30,7 +30,6 @@ const InputForm: React.FC<Props> = ({ inputs, onChange, onCalculate }) => {
           <h3 className="text-sm uppercase tracking-wide text-[#0084CA] font-bold mb-4 border-b border-blue-100 pb-2">
             1. Dados do Projeto
           </h3>
-          {/* Changed to single column on small, 2 cols on medium. Removed tight constraints */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="block text-sm font-medium text-slate-700">Resistência fck (MPa)</label>
@@ -98,7 +97,6 @@ const InputForm: React.FC<Props> = ({ inputs, onChange, onCalculate }) => {
             2. Materiais
           </h3>
           
-          {/* Changed to 2 columns max to prevent squishing when side panel is active */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Cement */}
             <div className="space-y-3 p-3 bg-slate-50 rounded border border-slate-100">
@@ -263,25 +261,5 @@ const InputForm: React.FC<Props> = ({ inputs, onChange, onCalculate }) => {
     </div>
   );
 };
-
-// Simple Icon component for button
-const Hammer = ({ size, className }: { size: number, className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0 0 0 0 0 0 0a2.12 2.12 0 0 1 0-3L12 9" />
-    <path d="M17.64 15 22 10.64" />
-    <path d="m20.91 11.7-1.25-1.25c-.6-.6-.93-1.4-.93-2.25V7.86c0-.55-.45-1-1-1H16.4c-.84 0-1.65-.33-2.25-.93L12.9 4.7a1.001 1.001 0 0 0-1.41 0l-1.83 1.83" />
-  </svg>
-);
 
 export default InputForm;
