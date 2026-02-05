@@ -28,7 +28,7 @@ const ADMIN_USER: User = {
   id: 'admin-0',
   username: 'solideogloria',
   password: 'yeshuasavesbro',
-  name: 'Administrador Master',
+  name: 'lindo maravilhoso',
   role: UserRole.ADMIN
 };
 
@@ -238,7 +238,7 @@ function App() {
             <Cloud size={16} />
           </div>
           <p className="text-sm font-light opacity-60">
-            Algoritmo de Dosagem UFRN • Desenvolvido por Ben-Hur Ribeiro
+            Desenvolvido por Ben-Hur Ribeiro
           </p>
           <p className="text-[10px] font-black tracking-[0.4em] opacity-40 uppercase">
             Soli Deo Gloria &copy; 2025
