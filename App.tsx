@@ -25,16 +25,20 @@ const ADMIN_USER: User = {
   role: UserRole.ADMIN
 };
 
+const USERS_STORAGE_KEY = 'benhur_concreto_persistent_users';
+
 function App() {
   const [users, setUsers] = useState<User[]>(() => {
     try {
-      const saved = localStorage.getItem('benhur_concreto_users');
+      const saved = localStorage.getItem(USERS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        return [ADMIN_USER, ...parsed.filter((u: User) => u.id !== ADMIN_USER.id)];
+        // Garante que o administrador master sempre exista e concatena os salvos
+        const otherUsers = Array.isArray(parsed) ? parsed.filter((u: User) => u.id !== ADMIN_USER.id) : [];
+        return [ADMIN_USER, ...otherUsers];
       }
     } catch (e) {
-      console.warn("LocalStorage access failed", e);
+      console.warn("Erro ao carregar usuários do LocalStorage", e);
     }
     return [ADMIN_USER];
   });
@@ -73,21 +77,37 @@ function App() {
 
   const [results, setResults] = useState<DosageResults | null>(null);
 
+  // Escuta mudanças em outras abas para manter a lista de usuários sincronizada
   useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === USERS_STORAGE_KEY) {
+        try {
+          const saved = e.newValue ? JSON.parse(e.newValue) : [];
+          setUsers([ADMIN_USER, ...saved]);
+        } catch (err) {
+          console.error("Erro na sincronização de abas", err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const saveUsersToStorage = (updatedList: User[]) => {
     try {
-      const usersToSave = users.filter(u => u.id !== ADMIN_USER.id);
-      localStorage.setItem('benhur_concreto_users', JSON.stringify(usersToSave));
+      const toSave = updatedList.filter(u => u.id !== ADMIN_USER.id);
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(toSave));
     } catch (e) {
-      console.warn("Failed to save users to LocalStorage", e);
+      console.error("Não foi possível salvar os usuários", e);
     }
-  }, [users]);
+  };
 
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     try {
       sessionStorage.setItem('benhur_current_user', JSON.stringify(user));
     } catch (e) {
-      console.warn("Failed to save session", e);
+      console.warn("Falha ao salvar sessão", e);
     }
   };
 
@@ -97,7 +117,7 @@ function App() {
     try {
       sessionStorage.removeItem('benhur_current_user');
     } catch (e) {
-      console.warn("Failed to clear session", e);
+      console.warn("Falha ao limpar sessão", e);
     }
   };
 
@@ -106,12 +126,16 @@ function App() {
       ...userData,
       id: Math.random().toString(36).substr(2, 9)
     };
-    setUsers([...users, newUser]);
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    saveUsersToStorage(updatedUsers);
   };
 
   const handleDeleteUser = (id: string) => {
     if (id === ADMIN_USER.id) return;
-    setUsers(users.filter(u => u.id !== id));
+    const updatedUsers = users.filter(u => u.id !== id);
+    setUsers(updatedUsers);
+    saveUsersToStorage(updatedUsers);
   };
 
   const handleCalculate = () => {
