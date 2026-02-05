@@ -17,7 +17,7 @@ import {
 } from './types';
 import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
-import { Cloud, CloudOff, Loader2, RefreshCw, Database } from 'lucide-react';
+import { Loader2, Database, Cloud, Hammer } from 'lucide-react';
 
 // Credenciais atualizadas com as chaves enviadas pelo usuário
 const supabaseUrl = 'https://dcynowriyzuygrzftrnf.supabase.co';
@@ -92,13 +92,11 @@ function App() {
           role: u.role as UserRole
         }));
         
-        // Garante que o administrador padrão local sempre esteja na lista
         const filteredUsers = dbUsers.filter(u => u.username !== ADMIN_USER.username);
         setUsers([ADMIN_USER, ...filteredUsers]);
         setIsOnline(true);
       }
     } catch (err: any) {
-      // Falha silenciosa: opera em modo local se a conexão for negada
       setIsOnline(false);
       setUsers([ADMIN_USER]);
     } finally {
@@ -165,10 +163,18 @@ function App() {
 
   if (loading && !currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-[#1C448E] animate-spin" />
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Estabelecendo Conexão</span>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-6 animate-pulse">
+          <div className="bg-[#1C448E] p-4 rounded-2xl shadow-xl">
+            <Hammer size={48} className="text-white" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-black text-[#1C448E] tracking-tight uppercase italic">Ben-Hur Concreto</h1>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <Loader2 className="w-4 h-4 text-[#0084CA] animate-spin" />
+              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Iniciando</span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -190,21 +196,6 @@ function App() {
       <main className="container mx-auto px-4 py-8 flex-grow">
         <div className="max-w-[1600px] mx-auto">
           
-          <div className="flex justify-end mb-6">
-            <button 
-              onClick={fetchUsers}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border transition-all ${
-                !isOnline 
-                  ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' 
-                  : 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100'
-              }`}
-            >
-              {!isOnline ? <CloudOff size={14} /> : <Cloud size={14} className="animate-pulse" />}
-              {!isOnline ? 'Sincronização Local' : 'Nuvem Conectada'}
-              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            </button>
-          </div>
-
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase italic">
               {showAdminView ? 'Gerenciamento' : 'Cálculo de Dosagem'}
