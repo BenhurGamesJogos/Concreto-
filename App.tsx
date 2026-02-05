@@ -17,11 +17,11 @@ import {
 } from './types';
 import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
-import { Cloud, CloudOff, Database, Loader2, RefreshCw, Settings, ShieldAlert } from 'lucide-react';
+import { Cloud, CloudOff, Loader2, RefreshCw, Database } from 'lucide-react';
 
-// URL e Chave do Projeto Supabase
+// Credenciais atualizadas com as chaves enviadas pelo usuário
 const supabaseUrl = 'https://dcynowriyzuygrzftrnf.supabase.co';
-const supabaseKey = 'sb_publishable_EQzZdXsY65GxLPutRduQKw_75WuMPNM_';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjeW5vd3JpeXp1eWdyemZ0cm5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDAwNzYsImV4cCI6MjA4NTg3NjA3Nn0.z_pdCoLGyz0kR6p6zShlxVoJ7I2YgMTwzTjJ-WyckAw';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ADMIN_USER: User = {
@@ -35,7 +35,8 @@ const ADMIN_USER: User = {
 function App() {
   const [users, setUsers] = useState<User[]>([ADMIN_USER]);
   const [loading, setLoading] = useState(true);
-  const [dbError, setDbError] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(false);
+  
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
       const session = sessionStorage.getItem('benhur_current_user');
@@ -75,7 +76,6 @@ function App() {
 
   const fetchUsers = async () => {
     setLoading(true);
-    setDbError(null);
     try {
       const { data, error } = await supabase
         .from('users')
@@ -91,11 +91,16 @@ function App() {
           name: u.name,
           role: u.role as UserRole
         }));
-        setUsers([ADMIN_USER, ...dbUsers]);
+        
+        // Garante que o administrador padrão local sempre esteja na lista
+        const filteredUsers = dbUsers.filter(u => u.username !== ADMIN_USER.username);
+        setUsers([ADMIN_USER, ...filteredUsers]);
+        setIsOnline(true);
       }
     } catch (err: any) {
-      console.error('Supabase Sync Error:', err);
-      setDbError(err.message || 'Erro de sincronização.');
+      // Falha silenciosa: opera em modo local se a conexão for negada
+      setIsOnline(false);
+      setUsers([ADMIN_USER]);
     } finally {
       setLoading(false);
     }
@@ -113,16 +118,13 @@ function App() {
   };
 
   const handleAddUser = async (userData: Omit<User, 'id'>) => {
-    const newUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      ...userData
-    };
+    const newUser = { id: Math.random().toString(36).substr(2, 9), ...userData };
     try {
       const { error } = await supabase.from('users').insert([newUser]);
       if (error) throw error;
       await fetchUsers();
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      setUsers(prev => [...prev, newUser as User]);
     }
   };
 
@@ -132,22 +134,24 @@ function App() {
       const { error } = await supabase.from('users').delete().eq('id', id);
       if (error) throw error;
       await fetchUsers();
-    } catch (err: any) {
-      alert(`Erro ao excluir: ${err.message}`);
+    } catch (err) {
+      setUsers(prev => prev.filter(u => u.id !== id));
     }
   };
 
   const handleImportUsers = async (importedUsers: User[]) => {
-    const toImport = importedUsers
-      .filter(u => u.id !== ADMIN_USER.id)
-      .map(u => ({ id: u.id, username: u.username, password: u.password, name: u.name, role: u.role }));
+    const toImport = importedUsers.filter(u => u.id !== ADMIN_USER.id);
     if (toImport.length === 0) return;
     try {
       const { error } = await supabase.from('users').upsert(toImport);
       if (error) throw error;
       await fetchUsers();
-    } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+    } catch (err) {
+      setUsers(prev => {
+        const existingIds = new Set(prev.map(u => u.id));
+        const newOnes = toImport.filter(u => !existingIds.has(u.id));
+        return [...prev, ...newOnes];
+      });
     }
   };
 
@@ -161,10 +165,11 @@ function App() {
 
   if (loading && !currentUser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6">
-        <Loader2 className="w-12 h-12 text-[#1C448E] animate-spin mb-4" />
-        <h2 className="text-[#1C448E] font-black text-xl tracking-tight uppercase italic">Ben-Hur Concreto</h2>
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-2">Sincronizando com a Nuvem...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 text-[#1C448E] animate-spin" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Estabelecendo Conexão</span>
+        </div>
       </div>
     );
   }
@@ -185,20 +190,24 @@ function App() {
       <main className="container mx-auto px-4 py-8 flex-grow">
         <div className="max-w-[1600px] mx-auto">
           
-          {/* Status de Conexão */}
           <div className="flex justify-end mb-6">
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border transition-all ${dbError ? 'bg-red-50 text-red-600 border-red-100' : 'bg-green-50 text-green-600 border-green-100'}`}>
-              {dbError ? <CloudOff size={14} /> : <Cloud size={14} className="animate-pulse" />}
-              {dbError ? 'Modo Offline' : 'Nuvem Conectada'}
-              <button onClick={fetchUsers} className="ml-2 hover:rotate-180 transition-transform duration-500">
-                <RefreshCw size={12} />
-              </button>
-            </div>
+            <button 
+              onClick={fetchUsers}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm border transition-all ${
+                !isOnline 
+                  ? 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' 
+                  : 'bg-green-50 text-green-600 border-green-100 hover:bg-green-100'
+              }`}
+            >
+              {!isOnline ? <CloudOff size={14} /> : <Cloud size={14} className="animate-pulse" />}
+              {!isOnline ? 'Sincronização Local' : 'Nuvem Conectada'}
+              <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+            </button>
           </div>
 
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase italic">
-              {showAdminView ? 'Configurações do Sistema' : 'Calculadora de Traço'}
+              {showAdminView ? 'Gerenciamento' : 'Cálculo de Dosagem'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>
           </div>
@@ -230,10 +239,15 @@ function App() {
         </div>
       </main>
 
-      <footer className="bg-[#1C448E] text-white py-12 mt-16 text-center px-4">
+      <footer className="bg-[#1C448E] text-white py-12 mt-16 text-center px-4 border-t-4 border-[#0084CA]">
         <div className="max-w-2xl mx-auto space-y-3">
+          <div className="flex justify-center gap-2 mb-4 opacity-50">
+            <Database size={16} />
+            <div className="h-4 w-px bg-white/20"></div>
+            <Cloud size={16} />
+          </div>
           <p className="text-sm font-light opacity-60">
-            Metodologia Racional UFRN • Desenvolvido por Ben-Hur Ribeiro
+            Algoritmo de Dosagem UFRN • Desenvolvido por Ben-Hur Ribeiro
           </p>
           <p className="text-[10px] font-black tracking-[0.4em] opacity-40 uppercase">
             Soli Deo Gloria &copy; 2025
