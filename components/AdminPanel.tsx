@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
-import { UserPlus, Trash2, Users, Shield, Key, AlertCircle } from 'lucide-react';
+import { UserPlus, Trash2, Users, Shield, Key, AlertCircle, Share2, Download, Upload, CheckCircle2 } from 'lucide-react';
 
 interface AdminPanelProps {
   users: User[];
   onAddUser: (user: Omit<User, 'id'>) => void;
   onDeleteUser: (id: string) => void;
+  onImportUsers: (users: User[]) => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onDeleteUser }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onDeleteUser, onImportUsers }) => {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
+  const [importCode, setImportCode] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,10 +38,39 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onDeleteUser 
     setError('');
   };
 
+  const handleExport = () => {
+    const data = JSON.stringify(users.filter(u => u.role !== UserRole.ADMIN));
+    const code = btoa(data); // Codifica em base64 para evitar quebras de caracteres
+    navigator.clipboard.writeText(code).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    });
+  };
+
+  const handleImport = () => {
+    try {
+      const decoded = atob(importCode.trim());
+      const parsed = JSON.parse(decoded);
+      if (Array.isArray(parsed)) {
+        onImportUsers(parsed);
+        setImportSuccess(true);
+        setImportCode('');
+        setTimeout(() => setImportSuccess(false), 3000);
+      } else {
+        throw new Error();
+      }
+    } catch (err) {
+      alert("Código de sincronização inválido. Certifique-se de que copiou o código completo.");
+    }
+  };
+
   return (
     <div className="grid lg:grid-cols-12 gap-8 animate-in fade-in duration-500">
-      {/* Cadastro Form */}
-      <div className="lg:col-span-4">
+      
+      {/* Coluna Esquerda: Cadastro e Sincronização */}
+      <div className="lg:col-span-4 space-y-6">
+        
+        {/* Cadastro Form */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="p-6 bg-slate-50 border-b border-slate-100">
             <h3 className="text-lg font-bold text-[#1C448E] flex items-center gap-2">
@@ -93,6 +126,65 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onDeleteUser 
               <UserPlus size={18} /> Criar Credencial
             </button>
           </form>
+        </div>
+
+        {/* Sincronização / Backup */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-6 bg-slate-50 border-b border-slate-100">
+            <h3 className="text-lg font-bold text-[#1C448E] flex items-center gap-2">
+              <Share2 size={20} className="text-[#0084CA]" /> 
+              Sincronização
+            </h3>
+            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider font-bold">Usar em outro dispositivo</p>
+          </div>
+          <div className="p-6 space-y-4">
+            
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <p className="text-[11px] text-blue-800 leading-relaxed mb-3">
+                Para usar no celular, clique em <strong>Exportar</strong> e envie o código para você. Depois, cole o código aqui no outro aparelho.
+              </p>
+              
+              <button
+                onClick={handleExport}
+                className={`w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-bold text-sm transition-all ${
+                  copySuccess 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-white text-blue-700 border border-blue-200 hover:bg-blue-50'
+                }`}
+              >
+                {copySuccess ? (
+                  <><CheckCircle2 size={16} /> Código Copiado!</>
+                ) : (
+                  <><Download size={16} /> Exportar Código</>
+                )}
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-tight">Importar de outro aparelho:</label>
+              <textarea
+                value={importCode}
+                onChange={(e) => setImportCode(e.target.value)}
+                placeholder="Cole o código aqui..."
+                className="w-full h-20 p-2 text-[10px] font-mono border border-slate-200 rounded-lg focus:ring-2 focus:ring-[#0084CA] outline-none resize-none bg-slate-50"
+              />
+              <button
+                onClick={handleImport}
+                disabled={!importCode.trim()}
+                className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-bold text-sm transition-all ${
+                  importSuccess 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-50'
+                }`}
+              >
+                {importSuccess ? (
+                  <><CheckCircle2 size={16} /> Sincronizado!</>
+                ) : (
+                  <><Upload size={16} /> Aplicar Código</>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
