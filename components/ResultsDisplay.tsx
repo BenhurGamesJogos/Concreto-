@@ -120,7 +120,7 @@ const ResultsDisplay: React.FC<Props> = ({ results }) => {
                       </div>
                       
                       <p className="text-blue-100 text-sm mb-4">
-                        Utilizar padiolas com base padrão de <strong>35cm x 45cm</strong>.
+                        Utilizar padiolas com base de <strong>{results.padiolas.sand.width}cm x {results.padiolas.sand.length}cm</strong>.
                       </p>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

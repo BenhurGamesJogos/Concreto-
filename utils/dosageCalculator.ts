@@ -31,20 +31,20 @@ const roundUpToHalf = (num: number): number => {
 
 // Helper: Calculate Padiola Dimensions
 // Base Assumption: 35cm x 45cm (Standard Cement Sack Mouth)
-// Limit: Height/Length <= 30cm. If > 30, split into 2.
-const calculatePadiola = (volumeLiters: number): PadiolaSpecs => {
-  const width = 35; // cm
-  const length = 45; // cm
+// Limit: Height <= 30cm. If > 30, split into more trips.
+const calculatePadiola = (volumeLiters: number, customWidth?: number, customLength?: number): PadiolaSpecs => {
+  const width = customWidth || 35; // cm
+  const length = customLength || 45; // cm
   
   // Volume (L) = (Width(cm) * Length(cm) * Height(cm)) / 1000
   // Height = (Volume * 1000) / (Width * Length)
   let height = (volumeLiters * 1000) / (width * length);
   let count = 1;
 
-  // Restriction: Max height/length of 30cm for handling
+  // Restriction: Max height of 30cm for handling
   if (height > 30) {
-    count = 2;
-    height = height / 2;
+    count = Math.ceil(height / 30);
+    height = height / count;
   }
 
   // Round up height to facilitate box construction (trena friendly)
@@ -171,8 +171,8 @@ export const calculateDosage = (inputs: DosageInputs): DosageResults => {
   const gravelCans = gravelVolPerSack / CAN_VOLUME_LITERS;
 
   // Padiola Calculation
-  const sandPadiola = calculatePadiola(sandVolPerSack);
-  const gravelPadiola = calculatePadiola(gravelVolPerSack);
+  const sandPadiola = calculatePadiola(sandVolPerSack, inputs.padiolaWidth, inputs.padiolaLength);
+  const gravelPadiola = calculatePadiola(gravelVolPerSack, inputs.padiolaWidth, inputs.padiolaLength);
 
   return {
     fc28,

@@ -67,7 +67,9 @@ function App() {
     alphaM: 40,
     alphaR: 60,
     exposure: ExposureCondition.COMUM,
-    structureType: StructureType.COMUM
+    structureType: StructureType.COMUM,
+    padiolaWidth: 35,
+    padiolaLength: 45
   });
 
   useEffect(() => {

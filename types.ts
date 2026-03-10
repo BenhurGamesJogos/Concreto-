@@ -53,6 +53,8 @@ export interface DosageInputs {
   alphaR: number;
   exposure: ExposureCondition;
   structureType: StructureType;
+  padiolaWidth?: number;
+  padiolaLength?: number;
 }
 
 export interface PadiolaSpecs {

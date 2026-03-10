@@ -211,7 +211,37 @@ const InputForm: React.FC<Props> = ({ inputs, onChange, onCalculate }) => {
           </div>
         </div>
 
-        {/* Section 3: Advanced Coefficients */}
+        {/* Section 3: Padiolas */}
+        <div>
+          <h3 className="text-sm uppercase tracking-wide text-[#0084CA] font-bold mb-4 border-b border-blue-100 pb-2">
+            3. Dimensões da Padiola
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-700">Largura da Base (cm)</label>
+              <input 
+                type="number" 
+                value={inputs.padiolaWidth} 
+                onChange={(e) => handleChange('padiolaWidth', parseFloat(e.target.value))}
+                className="w-full rounded-md border-slate-300 shadow-sm focus:border-[#0084CA] focus:ring-[#0084CA] border p-2"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-700">Comprimento da Base (cm)</label>
+              <input 
+                type="number" 
+                value={inputs.padiolaLength} 
+                onChange={(e) => handleChange('padiolaLength', parseFloat(e.target.value))}
+                className="w-full rounded-md border-slate-300 shadow-sm focus:border-[#0084CA] focus:ring-[#0084CA] border p-2"
+              />
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2 italic">
+            * A altura é limitada a 30cm. Caso o volume exceda este limite, o sistema calculará múltiplas viagens.
+          </p>
+        </div>
+
+        {/* Section 4: Advanced Coefficients */}
         <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/50">
           <h3 className="text-sm font-bold text-[#1C448E] mb-2 flex items-center gap-2">
             <Info size={16} /> Parâmetros de Cálculo (Mediana)
