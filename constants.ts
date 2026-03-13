@@ -40,3 +40,7 @@ export const DEFAULT_CEMENT_SPECIFIC_MASS = 3.1;
 export const CEMENT_SACK_VOLUME_LITERS = 35;
 export const CEMENT_SACK_WEIGHT_KG = 50;
 export const CAN_VOLUME_LITERS = 18;
+
+// Padiola Dimensions
+export const PADIOLA_BASE_WIDTH = 30; // cm
+export const PADIOLA_BASE_LENGTH = 40; // cm

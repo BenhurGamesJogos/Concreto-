@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { User, UserRole } from '../types';
 import { UserPlus, Trash2, Users, Shield, Key, AlertCircle, Share2, Download, Upload, CheckCircle2 } from 'lucide-react';
 
@@ -9,7 +9,7 @@ interface AdminPanelProps {
   onImportUsers: (users: User[]) => void;
 }
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onDeleteUser, onImportUsers }) => {
+const AdminPanel: React.FC<AdminPanelProps> = memo(({ users, onAddUser, onDeleteUser, onImportUsers }) => {
   const [newName, setNewName] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -248,6 +248,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ users, onAddUser, onDeleteUser,
       </div>
     </div>
   );
-};
+});
 
 export default AdminPanel;

@@ -19,9 +19,9 @@ import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
 import { Loader2, Database, Cloud, Hammer } from 'lucide-react';
 
-// Credenciais atualizadas com as chaves enviadas pelo usuário
-const supabaseUrl = 'https://dcynowriyzuygrzftrnf.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjeW5vd3JpeXp1eWdyemZ0cm5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDAwNzYsImV4cCI6MjA4NTg3NjA3Nn0.z_pdCoLGyz0kR6p6zShlxVoJ7I2YgMTwzTjJ-WyckAw';
+// Credenciais movidas para variáveis de ambiente para segurança e evitar bloqueios no GitHub
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ADMIN_USER: User = {

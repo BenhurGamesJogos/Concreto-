@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Hammer, HardHat, LogOut, User as UserIcon, ShieldCheck } from 'lucide-react';
 import { User, UserRole } from '../types';
 
@@ -9,7 +9,7 @@ interface HeaderProps {
   onToggleAdmin: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, showAdminPanel, onToggleAdmin }) => {
+const Header: React.FC<HeaderProps> = memo(({ currentUser, onLogout, showAdminPanel, onToggleAdmin }) => {
   return (
     <header className="bg-[#1C448E] text-white shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -68,6 +68,6 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, showAdminPanel, 
       </div>
     </header>
   );
-};
+});
 
 export default Header;
