@@ -22,7 +22,27 @@ import { Loader2, Database, Cloud, Hammer } from 'lucide-react';
 // Credenciais movidas para variáveis de ambiente para segurança e evitar bloqueios no GitHub
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Inicialização segura do Supabase
+let supabase: any;
+try {
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } else {
+    console.warn('Supabase credentials missing. Running in offline mode.');
+    supabase = {
+      from: () => ({
+        select: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+        insert: () => Promise.resolve({ error: new Error('Supabase not configured') }),
+        delete: () => ({ eq: () => Promise.resolve({ error: new Error('Supabase not configured') }) }),
+        upsert: () => Promise.resolve({ error: new Error('Supabase not configured') })
+      })
+    };
+  }
+} catch (e) {
+  console.error('Failed to initialize Supabase:', e);
+  supabase = { from: () => ({ select: () => Promise.resolve({ data: null, error: e }) }) };
+}
 
 const ADMIN_USER: User = {
   id: 'admin-0',
