@@ -213,8 +213,6 @@ export const calculateDosage = (inputs: DosageInputs): DosageResults => {
     padiolas: {
       sand: sandPadiola,
       gravel: gravelPadiola
-    },
-    fck: inputs.fck,
-    slump: inputs.slump
+    }
   };
 };

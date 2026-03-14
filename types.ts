@@ -114,6 +114,4 @@ export interface DosageResults {
     sand: PadiolaSpecs;
     gravel: PadiolaSpecs;
   };
-  fck: number;
-  slump: number;
 }

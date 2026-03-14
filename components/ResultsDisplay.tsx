@@ -1,103 +1,18 @@
-import React, { useState } from 'react';
-import { DosageResults, PadiolaSpecs, User, UserRole } from '../types';
-import { ClipboardList, Box, Droplets, Layers, Scale, HardHat, Ruler, Download, Loader2 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { PDFExport } from './PDFExport';
+import React from 'react';
+import { DosageResults, PadiolaSpecs } from '../types';
+import { ClipboardList, Box, Droplets, Layers, Scale, HardHat, Ruler } from 'lucide-react';
 
 interface Props {
   results: DosageResults;
-  currentUser: User | null;
 }
 
-const ResultsDisplay: React.FC<Props> = ({ results, currentUser }) => {
-  const [isExporting, setIsExporting] = useState(false);
-  
-  const isMaster = currentUser?.role === UserRole.ADMIN && currentUser?.username === 'solideogloria';
+const ResultsDisplay: React.FC<Props> = ({ results }) => {
   const formatNum = (n: number, d = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
-
-  const exportToPDF = async () => {
-    setIsExporting(true);
-    const element = document.getElementById('pdf-content');
-    if (!element) {
-      setIsExporting(false);
-      return;
-    }
-
-    try {
-      // Pequeno delay para garantir que o elemento está renderizado e fontes carregadas
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: 800, // Alinhado com a largura do PDFExport (800px)
-        windowWidth: 800,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.getElementById('pdf-content');
-          if (clonedElement) {
-            clonedElement.style.position = 'relative';
-            clonedElement.style.top = '0';
-            clonedElement.style.left = '0';
-            clonedElement.style.visibility = 'visible';
-            clonedElement.style.display = 'block';
-          }
-        }
-      });
-      
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4'); // 'p' para Portrait
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Calcular proporções para caber na página A4 Portrait
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      // Adicionar imagem
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-      
-      pdf.save(`Dosagem_Concreto_${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
-      {/* Hidden PDF Content */}
-      <PDFExport results={results} id="pdf-content" />
-
       {/* Summary Cards */}
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="font-black text-[#1C448E] uppercase italic tracking-tight">Resumo da Dosagem</h3>
-        {isMaster && (
-          <button 
-            onClick={exportToPDF}
-            disabled={isExporting}
-            className="flex items-center gap-2 bg-[#0084CA] hover:bg-[#1C448E] text-white px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-50"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Gerando...</span>
-              </>
-            ) : (
-              <>
-                <Download size={18} />
-                <span>Exportar PDF</span>
-              </>
-            )}
-          </button>
-        )}
-      </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <ResultCard label="fc28 Calculado" value={`${formatNum(results.fc28, 1)} MPa`} icon={<ClipboardList className="text-[#0084CA]" />} />
         <ResultCard label="Relação a/c" value={formatNum(results.waterCementRatio, 3)} icon={<Droplets className="text-[#0084CA]" />} />

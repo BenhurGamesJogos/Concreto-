@@ -22,27 +22,7 @@ import { Loader2, Database, Cloud, Hammer } from 'lucide-react';
 // Credenciais movidas para variáveis de ambiente para segurança e evitar bloqueios no GitHub
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-// Inicialização segura do Supabase
-let supabase: any;
-try {
-  if (supabaseUrl && supabaseKey) {
-    supabase = createClient(supabaseUrl, supabaseKey);
-  } else {
-    console.warn('Supabase credentials missing. Running in offline mode.');
-    supabase = {
-      from: () => ({
-        select: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
-        insert: () => Promise.resolve({ error: new Error('Supabase not configured') }),
-        delete: () => ({ eq: () => Promise.resolve({ error: new Error('Supabase not configured') }) }),
-        upsert: () => Promise.resolve({ error: new Error('Supabase not configured') })
-      })
-    };
-  }
-} catch (e) {
-  console.error('Failed to initialize Supabase:', e);
-  supabase = { from: () => ({ select: () => Promise.resolve({ data: null, error: e }) }) };
-}
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const ADMIN_USER: User = {
   id: 'admin-0',
@@ -97,28 +77,13 @@ function App() {
   }, []);
 
   const fetchUsers = async () => {
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase credentials missing. Running in offline mode.');
-      setIsOnline(false);
-      setUsers([ADMIN_USER]);
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*');
       
-      if (error) {
-        console.error('Supabase error:', error);
-        // Se o erro for que a tabela não existe (42P01 em Postgres)
-        if (error.code === '42P01') {
-          console.error('A tabela "users" não foi encontrada no seu banco de dados Supabase.');
-        }
-        throw error;
-      }
+      if (error) throw error;
       
       if (data) {
         const dbUsers = data.map((u: any) => ({
@@ -134,7 +99,6 @@ function App() {
         setIsOnline(true);
       }
     } catch (err: any) {
-      console.error('Database connection error details:', err);
       setIsOnline(false);
       setUsers([ADMIN_USER]);
     } finally {
@@ -260,7 +224,7 @@ function App() {
               
               {results && (
                 <div id="results-section" className="lg:col-span-7">
-                  <ResultsDisplay results={results} currentUser={currentUser} />
+                  <ResultsDisplay results={results} />
                 </div>
               )}
             </div>
