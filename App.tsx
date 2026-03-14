@@ -224,7 +224,7 @@ function App() {
               
               {results && (
                 <div id="results-section" className="lg:col-span-7">
-                  <ResultsDisplay results={results} />
+                  <ResultsDisplay results={results} currentUser={currentUser} />
                 </div>
               )}
             </div>
