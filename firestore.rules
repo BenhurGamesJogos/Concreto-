@@ -1,0 +1,83 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: userId
+// Fields:
+//   - id: string (required) - Unique identifier
+//   - username: string (required) - Login username
+//   - password: string (required) - Login password
+//   - name: string (required) - Display name
+//   - role: string (required, enum: ["ADMIN", "NORMAL"]) - User role
+//
+// Collection: calculations
+// Document ID: calcId
+// Fields:
+//   - id: string (required)
+//   - userId: string (required)
+//   - timestamp: string (required, date-time)
+//   - inputs: map (required)
+//   - results: map (required)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN' ||
+          (request.auth.token.email == "benhur.psilva@gmail.com" && request.auth.token.email_verified == true));
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasOnly(['id', 'username', 'password', 'name', 'role']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.username is string && data.username.size() > 0 &&
+             data.password is string && data.password.size() > 0 &&
+             data.name is string && data.name.size() > 0 &&
+             data.role in ['ADMIN', 'NORMAL'];
+    }
+
+    function isValidCalculation(data) {
+      return data.keys().hasOnly(['id', 'userId', 'timestamp', 'inputs', 'results']) &&
+             data.id is string &&
+             data.userId is string &&
+             data.timestamp is string &&
+             data.inputs is map &&
+             data.results is map;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /calculations/{calcId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidCalculation(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidCalculation(request.resource.data) && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+  }
+}

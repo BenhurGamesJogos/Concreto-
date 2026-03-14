@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { db, auth } from './firebase';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  setDoc, 
+  query, 
+  where, 
+  onSnapshot,
+  getDocFromServer
+} from 'firebase/firestore';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import Header from './components/Header';
 import InputForm from './components/InputForm';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -19,10 +32,57 @@ import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
 import { Loader2, Database, Cloud, Hammer } from 'lucide-react';
 
-// Credenciais atualizadas com as chaves enviadas pelo usuário
-const supabaseUrl = 'https://dcynowriyzuygrzftrnf.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjeW5vd3JpeXp1eWdyemZ0cm5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMDAwNzYsImV4cCI6MjA4NTg3NjA3Nn0.z_pdCoLGyz0kR6p6zShlxVoJ7I2YgMTwzTjJ-WyckAw';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Firebase Error Handling
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string;
+    email?: string | null;
+    emailVerified?: boolean;
+    isAnonymous?: boolean;
+    tenantId?: string | null;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 const ADMIN_USER: User = {
   id: 'admin-0',
@@ -73,32 +133,63 @@ function App() {
   });
 
   useEffect(() => {
-    fetchUsers();
+    const setupAuth = async () => {
+      try {
+        await signInAnonymously(auth);
+      } catch (error) {
+        console.error("Auth error:", error);
+      }
+    };
+
+    setupAuth();
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsOnline(true);
+        fetchUsers();
+      } else {
+        setIsOnline(false);
+      }
+    });
+
+    // Test connection
+    const testConnection = async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration.");
+        }
+      }
+    };
+    testConnection();
+
+    return () => unsubscribeAuth();
   }, []);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*');
+      const usersRef = collection(db, 'users');
+      const querySnapshot = await getDocs(usersRef);
       
-      if (error) throw error;
+      const dbUsers: User[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        dbUsers.push({
+          id: doc.id,
+          username: data.username,
+          password: data.password,
+          name: data.name,
+          role: data.role as UserRole
+        });
+      });
       
-      if (data) {
-        const dbUsers = data.map((u: any) => ({
-          id: u.id,
-          username: u.username,
-          password: u.password,
-          name: u.name,
-          role: u.role as UserRole
-        }));
-        
-        const filteredUsers = dbUsers.filter(u => u.username !== ADMIN_USER.username);
-        setUsers([ADMIN_USER, ...filteredUsers]);
-        setIsOnline(true);
-      }
+      const filteredUsers = dbUsers.filter(u => u.username !== ADMIN_USER.username);
+      setUsers([ADMIN_USER, ...filteredUsers]);
+      setIsOnline(true);
     } catch (err: any) {
+      handleFirestoreError(err, OperationType.LIST, 'users');
       setIsOnline(false);
       setUsers([ADMIN_USER]);
     } finally {
@@ -118,12 +209,13 @@ function App() {
   };
 
   const handleAddUser = async (userData: Omit<User, 'id'>) => {
-    const newUser = { id: Math.random().toString(36).substr(2, 9), ...userData };
+    const id = Math.random().toString(36).substr(2, 9);
+    const newUser = { id, ...userData };
     try {
-      const { error } = await supabase.from('users').insert([newUser]);
-      if (error) throw error;
+      await setDoc(doc(db, 'users', id), newUser);
       await fetchUsers();
     } catch (err: any) {
+      handleFirestoreError(err, OperationType.CREATE, `users/${id}`);
       setUsers(prev => [...prev, newUser as User]);
     }
   };
@@ -131,10 +223,10 @@ function App() {
   const handleDeleteUser = async (id: string) => {
     if (id === ADMIN_USER.id) return;
     try {
-      const { error } = await supabase.from('users').delete().eq('id', id);
-      if (error) throw error;
+      await deleteDoc(doc(db, 'users', id));
       await fetchUsers();
     } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, `users/${id}`);
       setUsers(prev => prev.filter(u => u.id !== id));
     }
   };
@@ -143,10 +235,12 @@ function App() {
     const toImport = importedUsers.filter(u => u.id !== ADMIN_USER.id);
     if (toImport.length === 0) return;
     try {
-      const { error } = await supabase.from('users').upsert(toImport);
-      if (error) throw error;
+      for (const u of toImport) {
+        await setDoc(doc(db, 'users', u.id), u);
+      }
       await fetchUsers();
     } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'users (batch import)');
       setUsers(prev => {
         const existingIds = new Set(prev.map(u => u.id));
         const newOnes = toImport.filter(u => !existingIds.has(u.id));
@@ -161,6 +255,26 @@ function App() {
     setTimeout(() => {
       document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
+  };
+
+  const handleSaveCalculation = async () => {
+    if (!results || !currentUser) return;
+    
+    const id = Math.random().toString(36).substr(2, 9);
+    const calculation = {
+      id,
+      userId: currentUser.id,
+      timestamp: new Date().toISOString(),
+      inputs,
+      results
+    };
+
+    try {
+      await setDoc(doc(db, 'calculations', id), calculation);
+      alert('Cálculo salvo com sucesso!');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `calculations/${id}`);
+    }
   };
 
   if (loading && !currentUser) {
@@ -224,7 +338,7 @@ function App() {
               
               {results && (
                 <div id="results-section" className="lg:col-span-7">
-                  <ResultsDisplay results={results} />
+                  <ResultsDisplay results={results} onSave={handleSaveCalculation} />
                 </div>
               )}
             </div>

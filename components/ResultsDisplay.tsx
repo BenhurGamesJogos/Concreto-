@@ -1,12 +1,13 @@
 import React from 'react';
 import { DosageResults, PadiolaSpecs } from '../types';
-import { ClipboardList, Box, Droplets, Layers, Scale, HardHat, Ruler } from 'lucide-react';
+import { ClipboardList, Box, Droplets, Layers, Scale, HardHat, Ruler, Save } from 'lucide-react';
 
 interface Props {
   results: DosageResults;
+  onSave?: () => void;
 }
 
-const ResultsDisplay: React.FC<Props> = ({ results }) => {
+const ResultsDisplay: React.FC<Props> = ({ results, onSave }) => {
   const formatNum = (n: number, d = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
   return (
@@ -24,6 +25,14 @@ const ResultsDisplay: React.FC<Props> = ({ results }) => {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
           <h3 className="font-bold text-[#1C448E]">Resultados da Dosagem</h3>
+          {onSave && (
+            <button 
+              onClick={onSave}
+              className="flex items-center gap-2 bg-[#0084CA] hover:bg-[#006da7] text-white px-4 py-1.5 rounded-lg text-sm font-bold transition-colors shadow-sm"
+            >
+              <Save size={16} /> Salvar Cálculo
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
