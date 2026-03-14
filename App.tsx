@@ -97,13 +97,28 @@ function App() {
   }, []);
 
   const fetchUsers = async () => {
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('Supabase credentials missing. Running in offline mode.');
+      setIsOnline(false);
+      setUsers([ADMIN_USER]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        // Se o erro for que a tabela não existe (42P01 em Postgres)
+        if (error.code === '42P01') {
+          console.error('A tabela "users" não foi encontrada no seu banco de dados Supabase.');
+        }
+        throw error;
+      }
       
       if (data) {
         const dbUsers = data.map((u: any) => ({
@@ -119,6 +134,7 @@ function App() {
         setIsOnline(true);
       }
     } catch (err: any) {
+      console.error('Database connection error details:', err);
       setIsOnline(false);
       setUsers([ADMIN_USER]);
     } finally {
