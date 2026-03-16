@@ -12,7 +12,12 @@ import {
   onSnapshot,
   getDocFromServer
 } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { 
+  signInAnonymously, 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider 
+} from 'firebase/auth';
 import Header from './components/Header';
 import InputForm from './components/InputForm';
 import ResultsDisplay from './components/ResultsDisplay';
@@ -96,6 +101,7 @@ function App() {
   const [users, setUsers] = useState<User[]>([ADMIN_USER]);
   const [loading, setLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(false);
+  const [debugError, setDebugError] = useState<string | null>(null);
   
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
@@ -133,11 +139,24 @@ function App() {
   });
 
   useEffect(() => {
+    const handleGoogleLogin = async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("Google Login Error:", error);
+      }
+    };
+
     const setupAuth = async () => {
       try {
         await signInAnonymously(auth);
       } catch (error: any) {
         console.error("Auth error:", error);
+        setDebugError(`Auth: ${error.message}`);
+        if (error.code === 'auth/operation-not-allowed') {
+          console.warn("Anonymous auth is disabled. Please use Google Login.");
+        }
         if (error.code === 'auth/network-request-failed') {
           setIsOnline(false);
         }
@@ -176,7 +195,10 @@ function App() {
       } catch (error) {
         if (error instanceof Error && error.message.includes('the client is offline')) {
           console.error("Please check your Firebase configuration.");
+          setDebugError("Conexão Offline (Rede)");
           setIsOnline(false);
+        } else if (error instanceof Error) {
+          setDebugError(`DB Test: ${error.message}`);
         }
       }
     };
@@ -212,6 +234,7 @@ function App() {
       console.log("Firestore: Users fetched successfully. Total users:", dbUsers.length + 1);
     } catch (err: any) {
       console.error("Firestore Fetch Error:", err);
+      setDebugError(`Fetch: ${err.message}`);
       // If it's a permission error, the database is still "online" but access is denied
       if (err.code === 'permission-denied') {
         setIsOnline(true); 
@@ -376,19 +399,37 @@ function App() {
       <footer className="bg-[#1C448E] text-white py-12 mt-16 text-center px-4 border-t-4 border-[#0084CA]">
         <div className="max-w-2xl mx-auto space-y-3">
           <div className="flex justify-center items-center gap-3 mb-4">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,113,0.5)]'}`}></div>
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
-                {isOnline ? 'Banco de Dados Conectado' : 'Banco de Dados Offline'}
-              </span>
-              {!isOnline && (
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors"
-                  title="Tentar reconectar"
-                >
-                  <RefreshCw size={10} className="animate-spin-reverse" />
-                </button>
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,113,0.5)]'}`}></div>
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+                  {isOnline ? 'Banco de Dados Conectado' : 'Banco de Dados Offline'}
+                </span>
+                {!isOnline && (
+                  <div className="flex items-center gap-2 ml-2">
+                    <button 
+                      onClick={() => {
+                        const provider = new GoogleAuthProvider();
+                        signInWithPopup(auth, provider).catch(err => setDebugError(`Google: ${err.message}`));
+                      }}
+                      className="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded text-[9px] font-bold transition-colors"
+                    >
+                      Login Google
+                    </button>
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                      title="Tentar reconectar"
+                    >
+                      <RefreshCw size={10} className="animate-spin-reverse" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {debugError && (
+                <span className="text-[8px] text-rose-300 opacity-50 font-mono">
+                  Erro: {debugError}
+                </span>
               )}
             </div>
             <div className="h-4 w-px bg-white/20"></div>
