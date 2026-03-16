@@ -138,6 +138,7 @@ function App() {
         await signInAnonymously(auth);
       } catch (error) {
         console.error("Auth error:", error);
+        setLoading(false);
       }
     };
 
@@ -145,10 +146,13 @@ function App() {
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
+        console.log("Firebase Auth: Authenticated as", user.uid);
         setIsOnline(true);
         fetchUsers();
       } else {
+        console.log("Firebase Auth: Not authenticated");
         setIsOnline(false);
+        setLoading(false);
       }
     });
 
@@ -188,6 +192,7 @@ function App() {
       const filteredUsers = dbUsers.filter(u => u.username !== ADMIN_USER.username);
       setUsers([ADMIN_USER, ...filteredUsers]);
       setIsOnline(true);
+      console.log("Firestore: Users fetched successfully. Total users:", dbUsers.length + 1);
     } catch (err: any) {
       handleFirestoreError(err, OperationType.LIST, 'users');
       setIsOnline(false);
@@ -348,10 +353,18 @@ function App() {
 
       <footer className="bg-[#1C448E] text-white py-12 mt-16 text-center px-4 border-t-4 border-[#0084CA]">
         <div className="max-w-2xl mx-auto space-y-3">
-          <div className="flex justify-center gap-2 mb-4 opacity-50">
-            <Database size={16} />
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,113,0.5)]'}`}></div>
+              <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
+                {isOnline ? 'Banco de Dados Conectado' : 'Banco de Dados Offline'}
+              </span>
+            </div>
             <div className="h-4 w-px bg-white/20"></div>
-            <Cloud size={16} />
+            <div className="flex gap-2 opacity-50">
+              <Database size={16} />
+              <Cloud size={16} />
+            </div>
           </div>
           <p className="text-sm font-light opacity-60">
             Desenvolvido por Ben-Hur Ribeiro
