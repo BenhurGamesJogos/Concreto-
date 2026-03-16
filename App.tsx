@@ -9,14 +9,11 @@ import {
   setDoc, 
   query, 
   where, 
-  onSnapshot,
-  getDocFromServer
+  onSnapshot
 } from 'firebase/firestore';
 import { 
   signInAnonymously, 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  GoogleAuthProvider 
+  onAuthStateChanged
 } from 'firebase/auth';
 import Header from './components/Header';
 import InputForm from './components/InputForm';
@@ -35,7 +32,7 @@ import {
 } from './types';
 import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
-import { Loader2, Database, Cloud, Hammer, RefreshCw } from 'lucide-react';
+import { Loader2, Hammer } from 'lucide-react';
 
 // Firebase Error Handling
 enum OperationType {
@@ -100,8 +97,6 @@ const ADMIN_USER: User = {
 function App() {
   const [users, setUsers] = useState<User[]>([ADMIN_USER]);
   const [loading, setLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState(false);
-  const [debugError, setDebugError] = useState<string | null>(null);
   
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
@@ -139,78 +134,28 @@ function App() {
   });
 
   useEffect(() => {
-    const handleGoogleLogin = async () => {
-      try {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        console.error("Google Login Error:", error);
-      }
-    };
-
     const setupAuth = async () => {
       try {
         await signInAnonymously(auth);
       } catch (error: any) {
         console.error("Auth error:", error);
-        if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
-          setDebugError("Aviso: Login Anônimo desativado no Firebase Console.");
-          setIsOnline(true); // Consideramos online, mas com restrição
-        } else {
-          setDebugError(`Erro de Conexão: ${error.message}`);
-          if (error.code === 'auth/network-request-failed') {
-            setIsOnline(false);
-          }
-        }
         setLoading(false);
       }
     };
 
     setupAuth();
 
-    // Monitor browser online status
-    const handleStatusChange = () => {
-      if (!navigator.onLine) {
-        setIsOnline(false);
-      }
-    };
-    window.addEventListener('online', handleStatusChange);
-    window.addEventListener('offline', handleStatusChange);
-
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         console.log("Firebase Auth: Authenticated as", user.uid);
-        setIsOnline(true);
         fetchUsers();
       } else {
         console.log("Firebase Auth: Not authenticated");
-        setIsOnline(false);
         setLoading(false);
       }
     });
 
-    // Test connection
-    const testConnection = async () => {
-      try {
-        await getDocFromServer(doc(db, 'test', 'connection'));
-        setIsOnline(true);
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration.");
-          setDebugError("Conexão Offline (Rede)");
-          setIsOnline(false);
-        } else if (error instanceof Error) {
-          setDebugError(`DB Test: ${error.message}`);
-        }
-      }
-    };
-    testConnection();
-
-    return () => {
-      unsubscribeAuth();
-      window.removeEventListener('online', handleStatusChange);
-      window.removeEventListener('offline', handleStatusChange);
-    };
+    return () => unsubscribeAuth();
   }, []);
 
   const fetchUsers = async () => {
@@ -232,17 +177,9 @@ function App() {
       
       const filteredUsers = dbUsers.filter(u => u.username !== ADMIN_USER.username);
       setUsers([ADMIN_USER, ...filteredUsers]);
-      setIsOnline(true);
       console.log("Firestore: Users fetched successfully. Total users:", dbUsers.length + 1);
     } catch (err: any) {
       console.error("Firestore Fetch Error:", err);
-      setDebugError(`Fetch: ${err.message}`);
-      // If it's a permission error, the database is still "online" but access is denied
-      if (err.code === 'permission-denied') {
-        setIsOnline(true); 
-      } else {
-        setIsOnline(false);
-      }
       setUsers([ADMIN_USER]);
     } finally {
       setLoading(false);
@@ -400,53 +337,6 @@ function App() {
 
       <footer className="bg-[#1C448E] text-white py-12 mt-16 text-center px-4 border-t-4 border-[#0084CA]">
         <div className="max-w-2xl mx-auto space-y-3">
-          <div className="flex justify-center items-center gap-3 mb-4">
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,113,0.5)]'}`}></div>
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
-                  {isOnline ? 'Banco de Dados Conectado' : 'Banco de Dados Offline'}
-                </span>
-                {!isOnline && (
-                  <div className="flex items-center gap-2 ml-2">
-                    <button 
-                      onClick={() => {
-                        const provider = new GoogleAuthProvider();
-                        signInWithPopup(auth, provider).catch(err => setDebugError(`Google: ${err.message}`));
-                      }}
-                      className="px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded text-[9px] font-bold transition-colors"
-                    >
-                      Login Google
-                    </button>
-                    <button 
-                      onClick={() => window.location.reload()}
-                      className="p-1 hover:bg-white/10 rounded-full transition-colors"
-                      title="Tentar reconectar"
-                    >
-                      <RefreshCw size={10} className="animate-spin-reverse" />
-                    </button>
-                  </div>
-                )}
-              </div>
-              {debugError && (
-                <div className="flex flex-col items-center mt-2">
-                  <span className="text-[8px] text-rose-300 opacity-80 font-mono bg-rose-950/30 px-2 py-0.5 rounded">
-                    {debugError}
-                  </span>
-                  {debugError.includes('Anônimo') && (
-                    <span className="text-[7px] text-white/40 mt-1 max-w-[200px]">
-                      Ative 'Login Anônimo' no Console do Firebase para liberar o acesso.
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="h-4 w-px bg-white/20"></div>
-            <div className="flex gap-2 opacity-50">
-              <Database size={16} />
-              <Cloud size={16} />
-            </div>
-          </div>
           <p className="text-sm font-light opacity-60">
             Desenvolvido por Ben-Hur Ribeiro
           </p>

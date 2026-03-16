@@ -62,6 +62,10 @@ service cloud.firestore {
              data.results is map;
     }
 
+    match /test/connection {
+      allow read: if true;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
