@@ -30,7 +30,7 @@ import {
 } from './types';
 import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
-import { Loader2, Database, Cloud, Hammer } from 'lucide-react';
+import { Loader2, Database, Cloud, Hammer, RefreshCw } from 'lucide-react';
 
 // Firebase Error Handling
 enum OperationType {
@@ -172,7 +172,6 @@ function App() {
   }, []);
 
   const fetchUsers = async () => {
-    setLoading(true);
     try {
       const usersRef = collection(db, 'users');
       const querySnapshot = await getDocs(usersRef);
@@ -194,8 +193,13 @@ function App() {
       setIsOnline(true);
       console.log("Firestore: Users fetched successfully. Total users:", dbUsers.length + 1);
     } catch (err: any) {
-      handleFirestoreError(err, OperationType.LIST, 'users');
-      setIsOnline(false);
+      console.error("Firestore Fetch Error:", err);
+      // If it's a permission error, the database is still "online" but access is denied
+      if (err.code === 'permission-denied') {
+        setIsOnline(true); 
+      } else {
+        setIsOnline(false);
+      }
       setUsers([ADMIN_USER]);
     } finally {
       setLoading(false);
@@ -359,6 +363,15 @@ function App() {
               <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">
                 {isOnline ? 'Banco de Dados Conectado' : 'Banco de Dados Offline'}
               </span>
+              {!isOnline && (
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors"
+                  title="Tentar reconectar"
+                >
+                  <RefreshCw size={10} className="animate-spin-reverse" />
+                </button>
+              )}
             </div>
             <div className="h-4 w-px bg-white/20"></div>
             <div className="flex gap-2 opacity-50">
