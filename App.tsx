@@ -200,10 +200,13 @@ function App() {
   const handleAddUser = async (userData: Omit<User, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newUser = { id, ...userData };
+    console.log("Attempting to create user:", newUser);
     try {
       await setDoc(doc(db, 'users', id), newUser);
+      console.log("User created successfully in Firestore");
       await fetchUsers();
     } catch (err: any) {
+      console.error("Error creating user:", err);
       handleFirestoreError(err, OperationType.CREATE, `users/${id}`);
       setUsers(prev => [...prev, newUser as User]);
     }

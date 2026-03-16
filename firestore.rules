@@ -45,11 +45,10 @@ service cloud.firestore {
     }
 
     function isValidUser(data) {
-      return data.keys().hasOnly(['id', 'username', 'password', 'name', 'role']) &&
-             data.id is string && data.id.size() > 0 &&
-             data.username is string && data.username.size() > 0 &&
-             data.password is string && data.password.size() > 0 &&
-             data.name is string && data.name.size() > 0 &&
+      return data.keys().hasAll(['id', 'username', 'name', 'role']) &&
+             data.id is string &&
+             data.username is string &&
+             data.name is string &&
              data.role in ['ADMIN', 'NORMAL'];
     }
 
@@ -72,16 +71,16 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
-      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isOwner(userId) || isAdmin());
-      allow delete: if isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data);
+      allow update: if isAuthenticated() && isValidUser(request.resource.data);
+      allow delete: if isAuthenticated();
     }
 
     match /calculations/{calcId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && isValidCalculation(request.resource.data) && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && isValidCalculation(request.resource.data) && (resource.data.userId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidCalculation(request.resource.data);
+      allow update: if isAuthenticated() && isValidCalculation(request.resource.data);
+      allow delete: if isAuthenticated();
     }
   }
 }
