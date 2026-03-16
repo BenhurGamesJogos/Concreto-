@@ -153,12 +153,14 @@ function App() {
         await signInAnonymously(auth);
       } catch (error: any) {
         console.error("Auth error:", error);
-        setDebugError(`Auth: ${error.message}`);
-        if (error.code === 'auth/operation-not-allowed') {
-          console.warn("Anonymous auth is disabled. Please use Google Login.");
-        }
-        if (error.code === 'auth/network-request-failed') {
-          setIsOnline(false);
+        if (error.code === 'auth/admin-restricted-operation' || error.code === 'auth/operation-not-allowed') {
+          setDebugError("Aviso: Login Anônimo desativado no Firebase Console.");
+          setIsOnline(true); // Consideramos online, mas com restrição
+        } else {
+          setDebugError(`Erro de Conexão: ${error.message}`);
+          if (error.code === 'auth/network-request-failed') {
+            setIsOnline(false);
+          }
         }
         setLoading(false);
       }
@@ -427,9 +429,16 @@ function App() {
                 )}
               </div>
               {debugError && (
-                <span className="text-[8px] text-rose-300 opacity-50 font-mono">
-                  Erro: {debugError}
-                </span>
+                <div className="flex flex-col items-center mt-2">
+                  <span className="text-[8px] text-rose-300 opacity-80 font-mono bg-rose-950/30 px-2 py-0.5 rounded">
+                    {debugError}
+                  </span>
+                  {debugError.includes('Anônimo') && (
+                    <span className="text-[7px] text-white/40 mt-1 max-w-[200px]">
+                      Ative 'Login Anônimo' no Console do Firebase para liberar o acesso.
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             <div className="h-4 w-px bg-white/20"></div>
