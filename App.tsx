@@ -273,11 +273,13 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-6 animate-pulse">
-          <div className="bg-[#1C448E] p-4 rounded-2xl shadow-xl">
-            <Hammer size={48} className="text-white" />
+          <div className="relative flex items-center justify-center w-28 h-28 overflow-hidden rounded-2xl bg-[#1C448E] shadow-2xl border border-white/10">
+            <span className="text-7xl text-white select-none" style={{ fontFamily: "'Pirata One', cursive" }}>
+              B
+            </span>
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-black text-[#1C448E] tracking-tight uppercase italic">Ben-Hur Concreto</h1>
+            <h1 className="text-2xl font-black text-[#1C448E] tracking-tight uppercase">Ben-Hur Concreto</h1>
             <div className="flex items-center justify-center gap-2 mt-2">
               <Loader2 className="w-4 h-4 text-[#0084CA] animate-spin" />
               <span className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Iniciando</span>
@@ -305,7 +307,7 @@ function App() {
         <div className="max-w-[1600px] mx-auto">
           
           <div className="text-center mb-10">
-            <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase italic">
+            <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase">
               {showAdminView ? 'Gerenciamento' : 'Cálculo de Dosagem'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>

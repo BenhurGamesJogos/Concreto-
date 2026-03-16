@@ -14,11 +14,10 @@ const Header: React.FC<HeaderProps> = memo(({ currentUser, onLogout, showAdminPa
     <header className="bg-[#1C448E] text-white shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-[#0084CA] p-2 rounded-lg text-white">
-            <Hammer size={24} strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Ben-Hur Concreto</h1>
+          <div className="relative flex items-center justify-center w-12 h-12 overflow-hidden rounded-xl bg-[#0084CA] shadow-[0_4px_10px_rgba(0,0,0,0.3)] border border-white/20 group cursor-pointer">
+            <span className="text-4xl text-white select-none transition-transform group-hover:scale-110" style={{ fontFamily: "'Pirata One', cursive" }}>
+              B
+            </span>
           </div>
         </div>
         
