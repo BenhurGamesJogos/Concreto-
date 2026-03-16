@@ -136,13 +136,25 @@ function App() {
     const setupAuth = async () => {
       try {
         await signInAnonymously(auth);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Auth error:", error);
+        if (error.code === 'auth/network-request-failed') {
+          setIsOnline(false);
+        }
         setLoading(false);
       }
     };
 
     setupAuth();
+
+    // Monitor browser online status
+    const handleStatusChange = () => {
+      if (!navigator.onLine) {
+        setIsOnline(false);
+      }
+    };
+    window.addEventListener('online', handleStatusChange);
+    window.addEventListener('offline', handleStatusChange);
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -160,15 +172,21 @@ function App() {
     const testConnection = async () => {
       try {
         await getDocFromServer(doc(db, 'test', 'connection'));
+        setIsOnline(true);
       } catch (error) {
         if (error instanceof Error && error.message.includes('the client is offline')) {
           console.error("Please check your Firebase configuration.");
+          setIsOnline(false);
         }
       }
     };
     testConnection();
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      window.removeEventListener('online', handleStatusChange);
+      window.removeEventListener('offline', handleStatusChange);
+    };
   }, []);
 
   const fetchUsers = async () => {
