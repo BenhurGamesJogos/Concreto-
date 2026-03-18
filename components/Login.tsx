@@ -30,8 +30,10 @@ const Login: React.FC<LoginProps> = ({ users, onLogin }) => {
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
         <div className="bg-[#1C448E] p-8 text-center text-white">
-          <div className="inline-flex bg-[#0084CA] p-3 rounded-xl mb-4">
-            <Hammer size={32} />
+          <div className="relative flex items-center justify-center w-20 h-20 overflow-hidden rounded-2xl bg-[#0084CA] shadow-lg border border-white/20 mx-auto mb-4">
+            <span className="text-6xl text-white select-none" style={{ fontFamily: "'Pirata One', cursive" }}>
+              B
+            </span>
           </div>
           <h1 className="text-2xl font-bold">Ben-Hur Concreto</h1>
           <p className="text-blue-200 text-sm mt-1">Soli Deo Gloria</p>
