@@ -9,33 +9,49 @@ const StrengthEstimator: React.FC = () => {
   const [wcRatio, setWcRatio] = useState<number>(0.5);
   const [cementClass, setCementClass] = useState<CementClass>(CementClass.CP_32);
   const [sdControl, setSdControl] = useState<StandardDeviationControl>(StandardDeviationControl.RAZOAVEL);
+  const [autoWc, setAutoWc] = useState<boolean>(false);
 
   const results = useMemo(() => {
+    let currentWc = wcRatio;
+    let waterDemand = 0;
+    let cementCons = 0;
+
+    if (autoWc) {
+      // Empirical water demand for ~60mm slump: H = 160 + 10*m1 + 5*m2
+      waterDemand = 160 + (10 * sandRatio) + (5 * gravelRatio);
+      
+      // Volume equation: 1000 = C/3.1 + (m1*C)/2.63 + (m2*C)/2.65 + H
+      const denom = (1 / 3.1) + (sandRatio / 2.63) + (gravelRatio / 2.65);
+      cementCons = (1000 - waterDemand) / denom;
+      currentWc = waterDemand / cementCons;
+    }
+
     const { A, B } = CEMENT_CONSTANTS[cementClass];
     
     // Abrams Law (Inverse): w/c = A / (fc28 + B) => fc28 = (A / (w/c)) - B
-    const fc28 = (A / wcRatio) - B;
+    const fc28 = (A / currentWc) - B;
     
     // fck = fc28 - 1.65 * sd
     const fck = fc28 - 1.65 * sdControl;
 
-    // Estimate Cement Consumption (kg/m3)
-    // V = (1/gc) + (m1/gs) + (m2/gg) + (w/c)
-    // Using standard specific masses: gc=3.1, gs=2.63, gg=2.65
-    const volCement = 1 / 3.1;
-    const volSand = sandRatio / 2.63;
-    const volGravel = gravelRatio / 2.65;
-    const volWater = wcRatio;
-    
-    const totalVolume = volCement + volSand + volGravel + volWater;
-    const cementConsumption = 1000 / totalVolume;
+    if (!autoWc) {
+      const volCement = 1 / 3.1;
+      const volSand = sandRatio / 2.63;
+      const volGravel = gravelRatio / 2.65;
+      const volWater = wcRatio;
+      const totalVolume = volCement + volSand + volGravel + volWater;
+      cementCons = 1000 / totalVolume;
+      waterDemand = cementCons * wcRatio;
+    }
 
     return {
       fc28: Math.max(0, fc28),
       fck: Math.max(0, fck),
-      cementConsumption
+      cementConsumption: cementCons,
+      waterConsumption: waterDemand,
+      calculatedWc: currentWc
     };
-  }, [sandRatio, gravelRatio, wcRatio, cementClass, sdControl]);
+  }, [sandRatio, gravelRatio, wcRatio, cementClass, sdControl, autoWc]);
 
   const formatNum = (n: number, d = 2) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
 
@@ -86,16 +102,32 @@ const StrengthEstimator: React.FC = () => {
 
             {/* W/C Ratio */}
             <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                <Droplets size={14} /> Relação Água/Cimento (a/c)
-              </label>
-              <input 
-                type="number" 
-                step="0.01"
-                value={wcRatio} 
-                onChange={(e) => setWcRatio(Number(e.target.value))}
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-bold text-2xl text-[#0084CA] focus:bg-white focus:ring-2 focus:ring-[#0084CA] outline-none transition-all"
-              />
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                  <Droplets size={14} /> Relação Água/Cimento (a/c)
+                </label>
+                <button 
+                  onClick={() => setAutoWc(!autoWc)}
+                  className={`text-[10px] font-bold px-2 py-1 rounded-md transition-all ${autoWc ? 'bg-[#0084CA] text-white' : 'bg-slate-100 text-slate-400'}`}
+                >
+                  Slump = 60mm
+                </button>
+              </div>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  step="0.01"
+                  disabled={autoWc}
+                  value={autoWc ? results.calculatedWc.toFixed(2) : wcRatio} 
+                  onChange={(e) => setWcRatio(Number(e.target.value))}
+                  className={`w-full p-4 border rounded-xl font-bold text-2xl outline-none transition-all ${autoWc ? 'bg-slate-100 border-slate-200 text-slate-400' : 'bg-slate-50 border-slate-200 text-[#0084CA] focus:bg-white focus:ring-2 focus:ring-[#0084CA]'}`}
+                />
+                {autoWc && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#0084CA] bg-white px-2 py-1 rounded border border-[#0084CA]/20">
+                    CALCULADO
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Cement Class */}
@@ -131,7 +163,7 @@ const StrengthEstimator: React.FC = () => {
         <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-3">
           <Info className="text-[#0084CA] shrink-0" size={20} />
           <p className="text-xs text-blue-700 leading-relaxed">
-            <strong>Nota Técnica:</strong> Pela Lei de Abrams, a resistência depende do <strong>a/c</strong>. A variação de areia e brita altera o <strong>consumo de cimento</strong> e a trabalhabilidade, mas não a resistência potencial.
+            <strong>Nota Técnica:</strong> A resistência depende do <strong>a/c</strong>. Se você aumentar os agregados e precisar de mais água para manter a trabalhabilidade, lembre-se de aumentar o campo <strong>a/c</strong> para ver a queda na resistência.
           </p>
         </div>
       </div>
@@ -165,20 +197,38 @@ const StrengthEstimator: React.FC = () => {
             </div>
           </div>
 
-          {/* Consumption Card */}
-          <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-emerald-500/10 p-2 rounded-lg">
-                <Calculator className="text-emerald-600" size={24} />
+          {/* Consumption Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500/10 p-2 rounded-lg">
+                  <Calculator className="text-emerald-600" size={20} />
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-800">Cimento</h4>
+                  <p className="text-[9px] text-emerald-600">Consumo/m³</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-800">Consumo de Cimento</h4>
-                <p className="text-[10px] text-emerald-600">Varia conforme os agregados</p>
+              <div className="text-right">
+                <span className="text-xl font-black text-emerald-700">{formatNum(results.cementConsumption, 0)}</span>
+                <span className="text-[10px] font-bold text-emerald-600 ml-1">kg</span>
               </div>
             </div>
-            <div className="text-right">
-              <span className="text-3xl font-black text-emerald-700">{formatNum(results.cementConsumption, 0)}</span>
-              <span className="text-sm font-bold text-emerald-600 ml-1">kg/m³</span>
+
+            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-500/10 p-2 rounded-lg">
+                  <Droplets className="text-blue-600" size={20} />
+                </div>
+                <div>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-800">Água</h4>
+                  <p className="text-[9px] text-blue-600">Demanda/m³</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-black text-blue-700">{formatNum(results.waterConsumption, 0)}</span>
+                <span className="text-[10px] font-bold text-blue-600 ml-1">L</span>
+              </div>
             </div>
           </div>
         </div>
