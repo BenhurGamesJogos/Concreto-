@@ -18,6 +18,7 @@ import {
 import Header from './components/Header';
 import InputForm from './components/InputForm';
 import ResultsDisplay from './components/ResultsDisplay';
+import StrengthEstimator from './components/StrengthEstimator';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import { 
@@ -32,9 +33,10 @@ import {
 } from './types';
 import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
-import { Loader2, Hammer } from 'lucide-react';
+import { Loader2, Hammer, Calculator, Zap } from 'lucide-react';
 
 // Firebase Error Handling
+// ... (rest of imports and types)
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -108,6 +110,7 @@ function App() {
   });
 
   const [showAdminView, setShowAdminView] = useState(false);
+  const [activeTab, setActiveTab] = useState<'dosage' | 'strength'>('dosage');
   const [results, setResults] = useState<DosageResults | null>(null);
 
   const [inputs, setInputs] = useState<DosageInputs>({
@@ -308,9 +311,28 @@ function App() {
           
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase">
-              {showAdminView ? 'Gerenciamento' : 'Cálculo de Dosagem'}
+              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : 'Estimativa de Resistência'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>
+            
+            {!showAdminView && (
+              <div className="flex justify-center mt-8">
+                <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex gap-1">
+                  <button 
+                    onClick={() => setActiveTab('dosage')}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'dosage' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <Calculator size={18} /> Cálculo de Dosagem
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('strength')}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'strength' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <Calculator size={18} /> Estimativa de Resistência
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {showAdminView && currentUser.role === UserRole.ADMIN ? (
@@ -320,7 +342,7 @@ function App() {
               onDeleteUser={handleDeleteUser}
               onImportUsers={handleImportUsers}
             />
-          ) : (
+          ) : activeTab === 'dosage' ? (
             <div className="grid lg:grid-cols-12 gap-10">
               <div className={`lg:col-span-${results ? '5' : '12'} transition-all duration-700 ease-in-out`}>
                 <InputForm 
@@ -336,6 +358,8 @@ function App() {
                 </div>
               )}
             </div>
+          ) : (
+            <StrengthEstimator />
           )}
         </div>
       </main>

@@ -131,8 +131,7 @@ const ResultsDisplay: React.FC<Props> = ({ results, onSave }) => {
                       <p className="text-blue-100 text-sm mb-4">
                         Utilizar padiolas com base de <strong>{results.padiolas.sand.width}cm x {results.padiolas.sand.length}cm</strong>.
                       </p>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <PadiolaCard 
                            title="Areia" 
                            specs={results.padiolas.sand} 
@@ -152,14 +151,41 @@ const ResultsDisplay: React.FC<Props> = ({ results, onSave }) => {
                       </div>
                    </div>
 
-                   {/* Water Row - Added here since we removed the previous card */}
+                   {/* Cans Row (Latas) */}
+                   <div className="bg-blue-900/40 p-5 rounded-xl border border-blue-800">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Box className="text-emerald-400" size={20} />
+                        <h4 className="font-bold text-emerald-400 text-sm uppercase">2. Medir Agregados (Latas de 18L)</h4>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                          <div className="text-[10px] uppercase tracking-wider text-emerald-300/70 font-bold mb-1">Areia</div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-white">{results.sackTrace.sandCansRounded}</span>
+                            <span className="text-xs text-emerald-300/70 font-medium">Latas</span>
+                          </div>
+                          <div className="text-[9px] text-white/40 mt-1">Exato: {results.sackTrace.sandCansPerSack.toFixed(2)}</div>
+                        </div>
+                        <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                          <div className="text-[10px] uppercase tracking-wider text-emerald-300/70 font-bold mb-1">Brita</div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-white">{results.sackTrace.gravelCansRounded}</span>
+                            <span className="text-xs text-emerald-300/70 font-medium">Latas</span>
+                          </div>
+                          <div className="text-[9px] text-white/40 mt-1">Exato: {results.sackTrace.gravelCansPerSack.toFixed(2)}</div>
+                        </div>
+                      </div>
+                   </div>
+
+                   {/* Water Row */}
                    <div className="bg-blue-900/40 p-5 rounded-xl border border-blue-800 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                          <div className="bg-blue-500/20 p-3 rounded-lg">
                            <Droplets className="text-blue-300" size={24} />
                          </div>
                          <div>
-                            <h4 className="font-bold text-white text-sm uppercase">2. Adicionar Água</h4>
+                            <h4 className="font-bold text-white text-sm uppercase">3. Adicionar Água</h4>
                             <p className="text-blue-200 text-xs">Volume final já descontando umidade da areia</p>
                          </div>
                       </div>
