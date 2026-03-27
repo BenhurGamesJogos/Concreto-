@@ -19,6 +19,7 @@ import Header from './components/Header';
 import InputForm from './components/InputForm';
 import ResultsDisplay from './components/ResultsDisplay';
 import StrengthEstimator from './components/StrengthEstimator';
+import GranulometryTab from './components/GranulometryTab';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import { 
@@ -110,7 +111,7 @@ function App() {
   });
 
   const [showAdminView, setShowAdminView] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dosage' | 'strength'>('dosage');
+  const [activeTab, setActiveTab] = useState<'dosage' | 'strength' | 'granulometry'>('dosage');
   const [results, setResults] = useState<DosageResults | null>(null);
 
   const [inputs, setInputs] = useState<DosageInputs>({
@@ -311,7 +312,7 @@ function App() {
           
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase">
-              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : 'Estimativa de Resistência'}
+              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : activeTab === 'strength' ? 'Estimativa de Resistência' : 'Granulometria'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>
             
@@ -329,6 +330,12 @@ function App() {
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'strength' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
                   >
                     <Calculator size={18} /> Estimativa de Resistência
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('granulometry')}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'granulometry' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    <Calculator size={18} /> Granulometria
                   </button>
                 </div>
               </div>
@@ -358,8 +365,10 @@ function App() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : activeTab === 'strength' ? (
             <StrengthEstimator />
+          ) : (
+            <GranulometryTab />
           )}
         </div>
       </main>

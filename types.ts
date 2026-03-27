@@ -117,3 +117,19 @@ export interface DosageResults {
   fck: number;
   slump: number;
 }
+
+export interface SieveData {
+  size: number;
+  label: string;
+  retainedMass: number;
+  retainedPercentage?: number;
+  cumulativeRetainedPercentage?: number;
+  passingPercentage?: number;
+  isStandard: boolean;
+}
+
+export interface GranulometryResult {
+  sieves: SieveData[];
+  finenessModulus: number;
+  totalMass: number;
+}
