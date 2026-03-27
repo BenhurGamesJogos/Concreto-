@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { SieveData, GranulometryResult } from '../types';
 import { calculateGranulometry } from '../utils/granulometryCalculator';
-import { Calculator, ChartBar, Info, Trash2, Plus } from 'lucide-react';
+import { Calculator, BarChart, Info, Trash2, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const INITIAL_SIEVES: SieveData[] = [
@@ -134,7 +134,7 @@ const GranulometryTab: React.FC = () => {
           <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
             <div className="bg-slate-800 p-6 text-white flex items-center gap-3">
               <div className="p-2 bg-white/10 rounded-xl">
-                <ChartBar size={24} />
+                <BarChart size={24} />
               </div>
               <div>
                 <h3 className="text-lg font-black uppercase tracking-tight">Distribuição Granulométrica</h3>

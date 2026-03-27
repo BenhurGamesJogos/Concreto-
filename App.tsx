@@ -20,6 +20,7 @@ import InputForm from './components/InputForm';
 import ResultsDisplay from './components/ResultsDisplay';
 import StrengthEstimator from './components/StrengthEstimator';
 import GranulometryTab from './components/GranulometryTab';
+import Sidebar from './components/Sidebar';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import { 
@@ -34,7 +35,7 @@ import {
 } from './types';
 import { calculateDosage } from './utils/dosageCalculator';
 import { DEFAULT_CEMENT_SPECIFIC_MASS } from './constants';
-import { Loader2, Hammer, Calculator, Zap } from 'lucide-react';
+import { Loader2, Hammer } from 'lucide-react';
 
 // Firebase Error Handling
 // ... (rest of imports and types)
@@ -112,6 +113,7 @@ function App() {
 
   const [showAdminView, setShowAdminView] = useState(false);
   const [activeTab, setActiveTab] = useState<'dosage' | 'strength' | 'granulometry'>('dosage');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [results, setResults] = useState<DosageResults | null>(null);
 
   const [inputs, setInputs] = useState<DosageInputs>({
@@ -198,6 +200,7 @@ function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setShowAdminView(false);
+    setIsSidebarOpen(false);
     sessionStorage.removeItem('benhur_current_user');
   };
 
@@ -300,11 +303,26 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col">
+      <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        activeTab={activeTab}
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          setShowAdminView(false);
+        }}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        showAdminPanel={showAdminView}
+        onToggleAdmin={() => setShowAdminView(!showAdminView)}
+      />
+
       <Header 
         currentUser={currentUser} 
         onLogout={handleLogout}
         showAdminPanel={showAdminView}
         onToggleAdmin={() => setShowAdminView(!showAdminView)}
+        onToggleMenu={() => setIsSidebarOpen(true)}
       />
       
       <main className="container mx-auto px-4 py-8 flex-grow">
@@ -315,31 +333,6 @@ function App() {
               {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : activeTab === 'strength' ? 'Estimativa de Resistência' : 'Granulometria'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>
-            
-            {!showAdminView && (
-              <div className="flex justify-center mt-8">
-                <div className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex gap-1">
-                  <button 
-                    onClick={() => setActiveTab('dosage')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'dosage' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    <Calculator size={18} /> Cálculo de Dosagem
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('strength')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'strength' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    <Calculator size={18} /> Estimativa de Resistência
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('granulometry')}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'granulometry' ? 'bg-[#1C448E] text-white shadow-md' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    <Calculator size={18} /> Granulometria
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           {showAdminView && currentUser.role === UserRole.ADMIN ? (

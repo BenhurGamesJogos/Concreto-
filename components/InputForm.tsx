@@ -1,6 +1,6 @@
 import React from 'react';
 import { DosageInputs, CementClass, ExposureCondition, StructureType, StandardDeviationControl } from '../types';
-import { Info, Hammer } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 interface Props {
   inputs: DosageInputs;
@@ -284,7 +284,6 @@ const InputForm: React.FC<Props> = ({ inputs, onChange, onCalculate }) => {
           onClick={onCalculate}
           className="w-full bg-[#1C448E] hover:bg-[#163672] text-white font-bold py-4 px-6 rounded-lg transition-colors text-lg shadow-md flex justify-center items-center gap-2"
         >
-          <Hammer size={20} className="text-[#0084CA]" />
           Calcular Dosagem
         </button>
       </div>
