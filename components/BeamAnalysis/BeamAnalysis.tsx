@@ -384,7 +384,7 @@ const BeamAnalysis: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-[calc(100%-2rem)] max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
             >
               <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                 <h3 className="text-lg font-black text-[#1C448E] uppercase tracking-tight">
@@ -398,7 +398,7 @@ const BeamAnalysis: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-5 sm:p-8 space-y-6">
                 {editingElement.type === 'support' ? (
                   <>
                     {(() => {
@@ -441,7 +441,7 @@ const BeamAnalysis: React.FC = () => {
                       if (!l) return null;
                       return (
                         <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Posição Inicial (m)</label>
                               <input 
@@ -454,16 +454,25 @@ const BeamAnalysis: React.FC = () => {
                             </div>
                             <div>
                               <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Valor (kN{l.type === LoadType.DISTRIBUTED ? '/m' : l.type === LoadType.MOMENT ? 'm' : ''})</label>
-                              <input 
-                                type="number"
-                                value={l.value}
-                                onChange={(e) => updateLoad(l.id, { value: parseFloat(e.target.value) || 0 })}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#1C448E] outline-none"
-                              />
+                              <div className="flex gap-2">
+                                <input 
+                                  type="number"
+                                  value={l.value}
+                                  onChange={(e) => updateLoad(l.id, { value: parseFloat(e.target.value) || 0 })}
+                                  className="flex-grow min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#1C448E] outline-none"
+                                />
+                                <button
+                                  onClick={() => updateLoad(l.id, { value: l.value * -1 })}
+                                  className="px-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors text-xs"
+                                  title="Alternar sinal"
+                                >
+                                  +/-
+                                </button>
+                              </div>
                             </div>
                           </div>
                           {l.type === LoadType.DISTRIBUTED && (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Posição Final (m)</label>
                                 <input 
@@ -476,12 +485,21 @@ const BeamAnalysis: React.FC = () => {
                               </div>
                               <div>
                                 <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Valor Final (kN/m)</label>
-                                <input 
-                                  type="number"
-                                  value={l.endValue ?? l.value}
-                                  onChange={(e) => updateLoad(l.id, { endValue: parseFloat(e.target.value) || 0 })}
-                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#1C448E] outline-none"
-                                />
+                                <div className="flex gap-2">
+                                  <input 
+                                    type="number"
+                                    value={l.endValue ?? l.value}
+                                    onChange={(e) => updateLoad(l.id, { endValue: parseFloat(e.target.value) || 0 })}
+                                    className="flex-grow min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#1C448E] outline-none"
+                                  />
+                                  <button
+                                    onClick={() => updateLoad(l.id, { endValue: (l.endValue ?? l.value) * -1 })}
+                                    className="px-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors text-xs"
+                                    title="Alternar sinal"
+                                  >
+                                    +/-
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           )}
