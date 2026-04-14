@@ -12,7 +12,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  ReferenceLine
+  ReferenceLine,
+  Cell
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -28,6 +29,39 @@ const BeamAnalysis: React.FC = () => {
   const [editingElement, setEditingElement] = useState<{ type: 'load' | 'support', id: string } | null>(null);
 
   const analysis = useMemo(() => analyzeBeam(beam), [beam]);
+
+  const criticalSections = useMemo(() => {
+    const positions = new Set<number>([0, beam.length]);
+    beam.supports.forEach(s => positions.add(s.position));
+    beam.loads.forEach(l => {
+      positions.add(l.position);
+      if (l.type === LoadType.DISTRIBUTED && l.endPosition !== undefined) {
+        positions.add(l.endPosition);
+      }
+    });
+    
+    const sorted = Array.from(positions).sort((a, b) => a - b);
+    
+    return sorted.map(x => {
+      const isEnd = Math.abs(x - beam.length) < 0.0001;
+      const isStart = Math.abs(x) < 0.0001;
+
+      // Left: value just before x (x - 0.00001)
+      const leftPoint = isStart ? null : analysis.points.filter(p => p.x < x - 0.000005).sort((a, b) => b.x - a.x)[0];
+      
+      // Right: value just after x (x + 0.00001)
+      // This ensures we capture the jump caused by the load/reaction at exactly x
+      const rightPoint = isEnd ? null : analysis.points.filter(p => p.x > x + 0.000005).sort((a, b) => a.x - b.x)[0];
+      
+      return {
+        x,
+        vLeft: isStart ? 0 : (leftPoint?.shear ?? 0),
+        vRight: isEnd ? 0 : (rightPoint?.shear ?? 0),
+        mLeft: isStart ? 0 : (leftPoint?.moment ?? 0),
+        mRight: isEnd ? 0 : (rightPoint?.moment ?? 0)
+      };
+    });
+  }, [beam, analysis.points]);
 
   const calculatePosition = (clientX: number) => {
     if (!beamRef.current) return 0;
@@ -713,6 +747,58 @@ const BeamAnalysis: React.FC = () => {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Critical Sections Table */}
+      <div className="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <h3 className="text-sm font-black text-[#1C448E] uppercase tracking-widest flex items-center gap-2">
+            Tabela de Esforços nas Seções
+          </h3>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded">Precisão Técnica</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="p-4 text-[10px] font-black text-slate-500 uppercase tracking-widest italic font-serif">Posição (m)</th>
+                <th className="p-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center border-l border-slate-200 italic font-serif" colSpan={2}>Esforço Cortante (kN)</th>
+                <th className="p-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center border-l border-slate-200 italic font-serif" colSpan={2}>Momento Fletor (kNm)</th>
+              </tr>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="p-2"></th>
+                <th className="p-2 text-[9px] font-bold text-slate-400 uppercase text-center border-l border-slate-100">Esquerda</th>
+                <th className="p-2 text-[9px] font-bold text-slate-400 uppercase text-center">Direita</th>
+                <th className="p-2 text-[9px] font-bold text-slate-400 uppercase text-center border-l border-slate-100">Esquerda</th>
+                <th className="p-2 text-[9px] font-bold text-slate-400 uppercase text-center">Direita</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {criticalSections.map((section, idx) => (
+                <tr key={idx} className="hover:bg-slate-900 hover:text-white transition-all group cursor-default">
+                  <td className="p-4 text-sm font-mono font-bold text-[#1C448E] group-hover:text-[#00FF00]">{section.x.toFixed(2)}</td>
+                  <td className={`p-4 text-sm font-mono text-center border-l border-slate-100 group-hover:border-slate-800 ${Math.abs(section.vLeft) > 0.01 ? 'text-slate-700 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-600'}`}>
+                    {section.vLeft.toFixed(2)}
+                  </td>
+                  <td className={`p-4 text-sm font-mono text-center group-hover:border-slate-800 ${Math.abs(section.vRight) > 0.01 ? 'text-slate-700 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-600'}`}>
+                    {section.vRight.toFixed(2)}
+                  </td>
+                  <td className={`p-4 text-sm font-mono text-center border-l border-slate-100 group-hover:border-slate-800 ${Math.abs(section.mLeft) > 0.01 ? 'text-slate-700 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-600'}`}>
+                    {section.mLeft.toFixed(2)}
+                  </td>
+                  <td className={`p-4 text-sm font-mono text-center group-hover:border-slate-800 ${Math.abs(section.mRight) > 0.01 ? 'text-slate-700 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-600'}`}>
+                    {section.mRight.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="p-4 bg-slate-50 border-t border-slate-100">
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">
+            Nota: Valores calculados imediatamente à esquerda e à direita de cada ponto de interesse.
+          </p>
         </div>
       </div>
     </div>
