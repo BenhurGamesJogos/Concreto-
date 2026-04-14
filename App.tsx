@@ -20,6 +20,7 @@ import InputForm from './components/InputForm';
 import ResultsDisplay from './components/ResultsDisplay';
 import StrengthEstimator from './components/StrengthEstimator';
 import GranulometryTab from './components/GranulometryTab';
+import BeamAnalysis from './components/BeamAnalysis/BeamAnalysis';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
@@ -112,9 +113,18 @@ function App() {
   });
 
   const [showAdminView, setShowAdminView] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dosage' | 'strength' | 'granulometry'>('dosage');
+  const [activeTab, setActiveTab] = useState<'dosage' | 'strength' | 'granulometry' | 'beam'>('dosage');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [results, setResults] = useState<DosageResults | null>(null);
+
+  const closeSidebar = React.useCallback(() => {
+    console.log("Sidebar: Closing");
+    setIsSidebarOpen(false);
+  }, []);
+
+  const toggleSidebar = React.useCallback(() => {
+    setIsSidebarOpen(prev => !prev);
+  }, []);
 
   const [inputs, setInputs] = useState<DosageInputs>({
     volumeTotal: 1,
@@ -198,9 +208,10 @@ function App() {
   };
 
   const handleLogout = () => {
+    console.log("Sidebar: Closing via logout");
     setCurrentUser(null);
     setShowAdminView(false);
-    setIsSidebarOpen(false);
+    closeSidebar();
     sessionStorage.removeItem('benhur_current_user');
   };
 
@@ -302,27 +313,13 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      <Sidebar 
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          setShowAdminView(false);
-        }}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        showAdminPanel={showAdminView}
-        onToggleAdmin={() => setShowAdminView(!showAdminView)}
-      />
-
+    <div className="min-h-screen bg-slate-100 flex flex-col relative">
       <Header 
         currentUser={currentUser} 
         onLogout={handleLogout}
         showAdminPanel={showAdminView}
         onToggleAdmin={() => setShowAdminView(!showAdminView)}
-        onToggleMenu={() => setIsSidebarOpen(true)}
+        onToggleMenu={toggleSidebar}
       />
       
       <main className="container mx-auto px-4 py-8 flex-grow">
@@ -330,7 +327,7 @@ function App() {
           
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase">
-              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : activeTab === 'strength' ? 'Estimativa de Resistência' : 'Granulometria'}
+              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : activeTab === 'strength' ? 'Estimativa de Resistência' : activeTab === 'granulometry' ? 'Granulometria' : 'Análise de Vigas'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>
           </div>
@@ -360,8 +357,10 @@ function App() {
             </div>
           ) : activeTab === 'strength' ? (
             <StrengthEstimator />
-          ) : (
+          ) : activeTab === 'granulometry' ? (
             <GranulometryTab />
+          ) : (
+            <BeamAnalysis />
           )}
         </div>
       </main>
@@ -376,6 +375,24 @@ function App() {
           </p>
         </div>
       </footer>
+
+      <Sidebar 
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+        activeTab={activeTab}
+        setActiveTab={(tab) => {
+          setActiveTab(tab);
+          setShowAdminView(false);
+          closeSidebar();
+        }}
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        showAdminPanel={showAdminView}
+        onToggleAdmin={() => {
+          setShowAdminView(!showAdminView);
+          closeSidebar();
+        }}
+      />
     </div>
   );
 }

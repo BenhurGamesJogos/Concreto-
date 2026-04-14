@@ -7,7 +7,8 @@ import {
   LogOut, 
   ShieldCheck, 
   User as UserIcon,
-  ChevronRight
+  ChevronRight,
+  MoveHorizontal
 } from 'lucide-react';
 import { User, UserRole } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -15,8 +16,8 @@ import { motion, AnimatePresence } from 'motion/react';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  activeTab: 'dosage' | 'strength' | 'granulometry';
-  setActiveTab: (tab: 'dosage' | 'strength' | 'granulometry') => void;
+  activeTab: 'dosage' | 'strength' | 'granulometry' | 'beam';
+  setActiveTab: (tab: 'dosage' | 'strength' | 'granulometry' | 'beam') => void;
   currentUser: User | null;
   onLogout: () => void;
   showAdminPanel: boolean;
@@ -37,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dosage', label: 'Cálculo de Dosagem', icon: Calculator },
     { id: 'strength', label: 'Estimativa de Resistência', icon: Zap },
     { id: 'granulometry', label: 'Granulometria', icon: BarChart },
+    { id: 'beam', label: 'Análise de Vigas', icon: MoveHorizontal },
   ];
 
   return (
@@ -45,23 +47,28 @@ const Sidebar: React.FC<SidebarProps> = ({
         <>
           {/* Overlay */}
           <motion.div
+            key="sidebar-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9998] lg:hidden"
           />
 
           {/* Sidebar */}
           <motion.div
+            key="sidebar-content"
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-[70] flex flex-col border-r border-slate-200"
+            className="fixed inset-y-0 left-0 w-80 bg-white shadow-2xl z-[9999] flex flex-col border-r border-slate-200 overflow-hidden"
           >
             {/* Header */}
-            <div className="p-6 bg-[#1C448E] text-white flex items-center justify-between">
+            <div className="p-6 bg-[#1C448E] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="relative flex items-center justify-center w-10 h-10 overflow-hidden rounded-xl bg-[#0084CA] shadow-lg border border-white/20">
                   <span className="text-3xl text-white select-none" style={{ fontFamily: "'Pirata One', cursive" }}>
@@ -74,10 +81,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
               <button 
-                onClick={onClose}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="p-3 -mr-2 hover:bg-white/10 rounded-xl transition-all text-white/80 hover:text-white active:scale-90"
+                aria-label="Fechar menu"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
@@ -109,9 +120,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               {menuItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setActiveTab(item.id as any);
-                    if (window.innerWidth < 1024) onClose();
                   }}
                   className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
                     activeTab === item.id && !showAdminPanel
@@ -137,9 +148,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="pt-4 mt-4 border-t border-slate-100">
                   <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Administração</p>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       onToggleAdmin();
-                      if (window.innerWidth < 1024) onClose();
                     }}
                     className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
                       showAdminPanel

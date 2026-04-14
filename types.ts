@@ -133,3 +133,37 @@ export interface GranulometryResult {
   finenessModulus: number;
   totalMass: number;
 }
+
+export enum LoadType {
+  CONCENTRATED = 'CONCENTRATED',
+  DISTRIBUTED = 'DISTRIBUTED',
+  MOMENT = 'MOMENT'
+}
+
+export enum SupportType {
+  PINNED = 'PINNED',
+  ROLLER = 'ROLLER',
+  FIXED = 'FIXED',
+  HINGE = 'HINGE'
+}
+
+export interface BeamLoad {
+  id: string;
+  type: LoadType;
+  position: number;
+  value: number;
+  endPosition?: number;
+  endValue?: number;
+}
+
+export interface BeamSupport {
+  id: string;
+  type: SupportType;
+  position: number;
+}
+
+export interface BeamData {
+  length: number;
+  supports: BeamSupport[];
+  loads: BeamLoad[];
+}
