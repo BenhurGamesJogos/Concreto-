@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Scale, Droplets, ClipboardList, Zap, Info, Calculator } from 'lucide-react';
+import { Scale, Droplets, ClipboardList, Dumbbell, Info, Calculator } from 'lucide-react';
 import { CementClass, StandardDeviationControl } from '../types';
 import { CEMENT_CONSTANTS } from '../constants';
 
@@ -173,7 +173,7 @@ const StrengthEstimator: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 h-full flex flex-col">
           <div className="flex items-center gap-3 mb-8">
             <div className="bg-[#0084CA]/10 p-3 rounded-2xl">
-              <Calculator className="text-[#0084CA]" size={32} />
+              <Dumbbell className="text-[#0084CA]" size={32} />
             </div>
             <div>
               <h3 className="text-2xl font-black text-[#1C448E] uppercase tracking-tight">Resistência Estimada</h3>

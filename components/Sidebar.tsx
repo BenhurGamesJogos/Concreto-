@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Calculator, 
-  Zap, 
+  Dumbbell, 
   BarChart, 
   X, 
   LogOut, 
@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const menuItems = [
     { id: 'dosage', label: 'Cálculo de Dosagem', icon: Calculator },
-    { id: 'strength', label: 'Estimativa de Resistência', icon: Zap },
+    { id: 'strength', label: 'Estimativa de Resistência', icon: Dumbbell },
     { id: 'granulometry', label: 'Granulometria', icon: BarChart },
     { id: 'beam', label: 'Análise de Vigas', icon: MoveHorizontal },
   ];

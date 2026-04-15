@@ -213,7 +213,7 @@ export function analyzeBeam(beam: BeamData): BeamAnalysisResult {
 
     // Add reactions to the left of x
     reactions.forEach(r => {
-      if (r.position <= x + 1e-6) {
+      if (r.position <= x + 1e-7) {
         if (r.type === 'FORCE') {
           V += r.value;
           M += r.value * (x - r.position);
@@ -226,12 +226,12 @@ export function analyzeBeam(beam: BeamData): BeamAnalysisResult {
     // Subtract loads to the left of x
     loads.forEach(l => {
       if (l.type === LoadType.CONCENTRATED) {
-        if (l.position <= x + 1e-6) {
+        if (l.position <= x + 1e-7) {
           V -= l.value;
           M -= l.value * (x - l.position);
         }
       } else if (l.type === LoadType.MOMENT) {
-        if (l.position <= x + 1e-6) {
+        if (l.position <= x + 1e-7) {
           M += l.value;
         }
       } else if (l.type === LoadType.DISTRIBUTED) {

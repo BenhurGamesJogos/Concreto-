@@ -43,15 +43,14 @@ const BeamAnalysis: React.FC = () => {
     const sorted = Array.from(positions).sort((a, b) => a - b);
     
     return sorted.map(x => {
+      // Find points in analysis.points that represent left and right of this section
+      // We want the point exactly at x for the 'Right' side (includes the load/reaction)
+      // and the point just before x for the 'Left' side.
+      const leftPoint = analysis.points.filter(p => p.x < x - 0.000005).sort((a, b) => b.x - a.x)[0];
+      const rightPoint = analysis.points.find(p => Math.abs(p.x - x) < 0.000005);
+      
       const isEnd = Math.abs(x - beam.length) < 0.0001;
       const isStart = Math.abs(x) < 0.0001;
-
-      // Left: value just before x (x - 0.00001)
-      const leftPoint = isStart ? null : analysis.points.filter(p => p.x < x - 0.000005).sort((a, b) => b.x - a.x)[0];
-      
-      // Right: value just after x (x + 0.00001)
-      // This ensures we capture the jump caused by the load/reaction at exactly x
-      const rightPoint = isEnd ? null : analysis.points.filter(p => p.x > x + 0.000005).sort((a, b) => a.x - b.x)[0];
       
       return {
         x,
@@ -261,14 +260,16 @@ const BeamAnalysis: React.FC = () => {
                     updateSupport(s.id, { position: newPos });
                   }}
                   onClick={() => setEditingElement({ type: 'support', id: s.id })}
-                  className="absolute top-full flex flex-col items-center cursor-grab active:cursor-grabbing z-20 hover:scale-110 touch-none"
+                  className="absolute flex flex-col items-center cursor-grab active:cursor-grabbing z-20 hover:scale-110 touch-none"
                   animate={{ 
                     left: `${(s.position / beam.length) * 100}%`,
-                    x: '-50%'
+                    top: s.type === SupportType.HINGE ? '50%' : '100%',
+                    x: '-50%',
+                    y: s.type === SupportType.HINGE ? '-50%' : '0%'
                   }}
                 >
                   {s.type === SupportType.HINGE ? (
-                    <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-white -mt-2 z-10 shadow-sm"></div>
+                    <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-white z-10 shadow-sm"></div>
                   ) : s.type === SupportType.FIXED ? (
                     <div className="w-1.5 h-12 bg-slate-800 -mt-6 rounded-full"></div>
                   ) : (
