@@ -235,7 +235,7 @@ const BeamAnalysis: React.FC = () => {
             ref={dropZoneRef}
             className="relative h-48 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 mb-8 flex items-center justify-center"
           >
-            <div 
+            <motion.div 
               ref={beamRef}
               className="relative w-4/5 h-4 bg-[#1C448E] shadow-lg rounded-sm"
             >
@@ -253,14 +253,21 @@ const BeamAnalysis: React.FC = () => {
                 <motion.div 
                   key={s.id}
                   drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
                   dragMomentum={false}
                   dragElastic={0}
+                  onDrag={(e, info) => {
+                    const newPos = calculatePosition(info.point.x);
+                    if (newPos !== s.position) {
+                      updateSupport(s.id, { position: newPos });
+                    }
+                  }}
                   onDragEnd={(_, info) => {
                     const newPos = calculatePosition(info.point.x);
                     updateSupport(s.id, { position: newPos });
                   }}
                   onClick={() => setEditingElement({ type: 'support', id: s.id })}
-                  className="absolute flex flex-col items-center cursor-grab active:cursor-grabbing z-20 hover:scale-110 touch-none"
+                  className="absolute flex flex-col items-center cursor-grab active:cursor-grabbing z-20 hover:scale-110 touch-none w-0"
                   animate={{ 
                     left: `${(s.position / beam.length) * 100}%`,
                     top: s.type === SupportType.HINGE ? '50%' : '100%',
@@ -294,8 +301,26 @@ const BeamAnalysis: React.FC = () => {
                 <motion.div 
                   key={l.id}
                   drag="x"
+                  dragConstraints={{ left: 0, right: 0 }}
                   dragMomentum={false}
                   dragElastic={0}
+                  onDrag={(e, info) => {
+                    const newPos = calculatePosition(info.point.x);
+                    if (l.type === LoadType.DISTRIBUTED) {
+                      const span = (l.endPosition || l.position) - l.position;
+                      const clampedPos = Math.min(beam.length - span, newPos);
+                      if (clampedPos !== l.position) {
+                        updateLoad(l.id, { 
+                          position: clampedPos, 
+                          endPosition: clampedPos + span 
+                        });
+                      }
+                    } else {
+                      if (newPos !== l.position) {
+                        updateLoad(l.id, { position: newPos });
+                      }
+                    }
+                  }}
                   onDragEnd={(_, info) => {
                     const newPos = calculatePosition(info.point.x);
                     if (l.type === LoadType.DISTRIBUTED) {
@@ -310,10 +335,10 @@ const BeamAnalysis: React.FC = () => {
                     }
                   }}
                   onClick={() => setEditingElement({ type: 'load', id: l.id })}
-                  className={`absolute bottom-full flex flex-col cursor-grab active:cursor-grabbing z-30 hover:scale-[1.02] ${l.type !== LoadType.DISTRIBUTED ? 'items-center' : ''} touch-none`}
+                  className={`absolute bottom-full flex flex-col cursor-grab active:cursor-grabbing z-30 hover:scale-[1.02] ${l.type !== LoadType.DISTRIBUTED ? 'items-center w-0' : ''} touch-none`}
                   animate={{ 
                     left: `${(l.position / beam.length) * 100}%`,
-                    width: l.type === LoadType.DISTRIBUTED ? `${((l.endPosition! - l.position) / beam.length) * 100}%` : 'auto',
+                    width: l.type === LoadType.DISTRIBUTED ? `${((l.endPosition! - l.position) / beam.length) * 100}%` : 0,
                     x: l.type !== LoadType.DISTRIBUTED ? '-50%' : 0
                   }}
                 >
@@ -364,7 +389,7 @@ const BeamAnalysis: React.FC = () => {
                   )}
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
