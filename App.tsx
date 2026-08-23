@@ -21,6 +21,7 @@ import ResultsDisplay from './components/ResultsDisplay';
 import StrengthEstimator from './components/StrengthEstimator';
 import GranulometryTab from './components/GranulometryTab';
 import BeamAnalysis from './components/BeamAnalysis/BeamAnalysis';
+import FrameAnalysis from './components/FrameAnalysis/FrameAnalysis';
 import Sidebar from './components/Sidebar';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
@@ -113,7 +114,7 @@ function App() {
   });
 
   const [showAdminView, setShowAdminView] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dosage' | 'strength' | 'granulometry' | 'beam'>('dosage');
+  const [activeTab, setActiveTab] = useState<'dosage' | 'strength' | 'granulometry' | 'beam' | 'frame'>('dosage');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [results, setResults] = useState<DosageResults | null>(null);
 
@@ -327,7 +328,7 @@ function App() {
           
           <div className="text-center mb-10">
             <h2 className="text-4xl font-black text-[#1C448E] tracking-tighter uppercase">
-              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : activeTab === 'strength' ? 'Estimativa de Resistência' : activeTab === 'granulometry' ? 'Granulometria' : 'Análise de Vigas'}
+              {showAdminView ? 'Gerenciamento' : activeTab === 'dosage' ? 'Cálculo de Dosagem' : activeTab === 'strength' ? 'Estimativa de Resistência' : activeTab === 'granulometry' ? 'Granulometria' : activeTab === 'beam' ? 'Análise de Vigas' : 'Análise de Pórticos'}
             </h2>
             <div className="h-1.5 w-24 bg-[#0084CA] mx-auto mt-4 rounded-full"></div>
           </div>
@@ -359,8 +360,10 @@ function App() {
             <StrengthEstimator />
           ) : activeTab === 'granulometry' ? (
             <GranulometryTab />
-          ) : (
+          ) : activeTab === 'beam' ? (
             <BeamAnalysis />
+          ) : (
+            <FrameAnalysis currentUser={currentUser} />
           )}
         </div>
       </main>

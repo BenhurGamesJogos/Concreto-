@@ -167,3 +167,72 @@ export interface BeamData {
   supports: BeamSupport[];
   loads: BeamLoad[];
 }
+
+export interface FrameNode {
+  id: string;
+  x: number;
+  y: number;
+}
+
+export interface FrameBar {
+  id: string;
+  startNodeId: string;
+  endNodeId: string;
+  hasStartHinge?: boolean;
+  hasEndHinge?: boolean;
+  eiFactor?: number; // Multiplicador de rigidez à flexão (ex: 1 para 1*EI, 2 para 2*EI, X para X*EI)
+  eaFactor?: number; // Multiplicador de rigidez axial (ex: 1 para 1*EA, 2 para 2*EA)
+  customE?: number;  // kN/m²
+  customI?: number;  // m⁴
+  customA?: number;  // m²
+}
+
+export enum FrameSupportType {
+  PINNED = 'PINNED', // 2nd degree
+  ROLLER_X = 'ROLLER_X', // 1st degree (restricts X)
+  ROLLER_Y = 'ROLLER_Y', // 1st degree (restricts Y)
+  FIXED = 'FIXED' // 3rd degree
+}
+
+export interface FrameSupport {
+  id: string;
+  nodeId: string;
+  type: FrameSupportType;
+}
+
+export enum FrameLoadType {
+  POINT_GLOBAL = 'POINT_GLOBAL',
+  POINT_LOCAL = 'POINT_LOCAL',
+  DISTRIBUTED_GLOBAL = 'DISTRIBUTED_GLOBAL',
+  DISTRIBUTED_LOCAL = 'DISTRIBUTED_LOCAL',
+  MOMENT = 'MOMENT'
+}
+
+export interface FrameLoad {
+  id: string;
+  type: FrameLoadType;
+  nodeId?: string; // For loads at nodes
+  barId?: string; // For loads on bars
+  position?: number; // distance from start node [m]
+  valueX?: number; // kN
+  valueY?: number; // kN
+  valueNormal?: number; // kN
+  valuePerpendicular?: number; // kN
+  valueMoment?: number; // kNm
+  // For distributed
+  endPosition?: number;
+  isProjected?: boolean;
+  valueXEnd?: number;
+  valueYEnd?: number;
+  valueNormalEnd?: number;
+  valuePerpendicularEnd?: number;
+}
+
+export interface FrameData {
+  nodes: FrameNode[];
+  bars: FrameBar[];
+  supports: FrameSupport[];
+  loads: FrameLoad[];
+  considerAxialDeformation?: boolean; // false = Barras Inextensíveis (Método da Flexibilidade Clássico), true = Deformável Real (EA)
+  considerShearDeformation?: boolean; // false = Euler-Bernoulli (Clássico), true = Timoshenko (Cisalhamento)
+}
