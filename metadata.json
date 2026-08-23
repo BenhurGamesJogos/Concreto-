@@ -1,5 +1,0 @@
-{
-  "name": "Ben-Hur Concreto",
-  "description": "Aplicativo para cálculo de dosagem de concreto baseado no método da UFRN/Ben-Hur, com correções de umidade e cálculo de traço em volume.",
-  "requestFramePermissions": []
-}
